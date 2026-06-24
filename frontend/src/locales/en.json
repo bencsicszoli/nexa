@@ -46,5 +46,40 @@
     "switchTo": "Switch to {{lang}}",
     "hu": "Hungarian",
     "en": "English"
+  },
+  "auth": {
+    "loginTitle": "Sign in",
+    "loginSubtitle": "Welcome back to Nexa.",
+    "registerTitle": "Create your account",
+    "registerSubtitle": "14-day free trial. No ads, ever.",
+    "email": "Email",
+    "displayName": "Display name",
+    "password": "Password",
+    "signIn": "Sign in",
+    "signUp": "Sign up",
+    "signingIn": "Signing in…",
+    "signingUp": "Creating account…",
+    "noAccount": "No account yet?",
+    "haveAccount": "Already have an account?",
+    "toRegister": "Sign up",
+    "toLogin": "Sign in",
+    "logout": "Log out",
+    "loggedInAs": "Signed in as {{name}}",
+    "validation": {
+      "emailRequired": "Please enter your email.",
+      "emailInvalid": "Please enter a valid email address.",
+      "displayNameRequired": "Please enter a display name.",
+      "displayNameShort": "Display name must be at least 2 characters.",
+      "passwordRequired": "Please enter a password.",
+      "passwordShort": "Password must be at least 8 characters."
+    },
+    "error": {
+      "EMAIL_ALREADY_EXISTS": "This email is already registered.",
+      "INVALID_CREDENTIALS": "Invalid email or password.",
+      "VALIDATION_ERROR": "Please check the form fields.",
+      "UNAUTHENTICATED": "Your session has expired. Please sign in again.",
+      "NETWORK": "Could not reach the server. Please try again.",
+      "UNKNOWN_ERROR": "Something went wrong. Please try again."
+    }
   }
 }

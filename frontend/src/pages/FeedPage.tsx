@@ -1,16 +1,18 @@
 import { useTranslation } from 'react-i18next'
 import { Image as ImageIcon, PenLine, Rss, Video } from 'lucide-react'
 import Avatar from '../components/Avatar'
+import { useAuth } from '../auth/AuthContext'
 
 export default function FeedPage() {
   const { t } = useTranslation()
+  const { user } = useAuth()
 
   return (
     <div className="flex flex-col gap-4">
       {/* Szerkesztődoboz — a valódi posztolást az #5/#6 kártya köti be */}
       <section className="rounded-2xl border border-slate-200 bg-white p-4">
         <div className="flex items-center gap-3">
-          <Avatar name="Te Vagy" size="md" />
+          <Avatar name={user?.displayName ?? 'Nexa'} size="md" />
           <input
             type="text"
             placeholder={t('composer.placeholder')}

@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Bell, Home, Menu, MessageCircle, Search } from 'lucide-react'
 import LanguageSwitcher from '../LanguageSwitcher'
-import Avatar from '../Avatar'
+import UserMenu from './UserMenu'
 
 type TopBarProps = {
   /** Mobil bal-navigáció (drawer) megnyitása. */
@@ -74,7 +74,7 @@ export default function TopBar({ onOpenMenu }: TopBarProps) {
             <LanguageSwitcher />
           </div>
 
-          <Avatar name="Te Vagy" size="sm" />
+          <UserMenu />
         </div>
       </div>
 

@@ -22,10 +22,18 @@ Reklámmentes, előfizetéses közösségi platform (14 napos próbaidővel). Al
 
 ## Gyors indítás (helyi fejlesztés)
 
-Két terminál:
+A 3. kártyától a backendnek PostgreSQL kell. Adatbázist a legegyszerűbben Dockerből indítasz;
+a **host-port 5433**, hogy ne ütközzön egy gépen esetleg futó másik Postgresszel (5432):
 
 ```bash
-# 1) Backend  (http://localhost:8080)
+# DB (+ Redis) a háttérben — a host-port 5433 a Nexáé
+docker compose up -d postgres redis
+```
+
+Ezután két terminál:
+
+```bash
+# 1) Backend  (http://localhost:8080)  — alapból a localhost:5433/nexa DB-re csatlakozik
 cd backend
 mvn spring-boot:run
 
@@ -34,6 +42,8 @@ cd frontend
 npm install
 npm run dev
 ```
+
+> A datasource felülírható env-vel: `DB_URL`, `DB_USER`, `DB_PASSWORD`.
 
 Nyisd meg a <http://localhost:5173> címet — a kezdőoldalnak **zöld „UP"** backend-állapotot kell mutatnia.
 

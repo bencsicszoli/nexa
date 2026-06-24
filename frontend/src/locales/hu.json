@@ -46,5 +46,40 @@
     "switchTo": "Váltás erre: {{lang}}",
     "hu": "Magyar",
     "en": "Angol"
+  },
+  "auth": {
+    "loginTitle": "Bejelentkezés",
+    "loginSubtitle": "Üdv újra a Nexán.",
+    "registerTitle": "Fiók létrehozása",
+    "registerSubtitle": "14 napos ingyenes próba. Reklámok nélkül, mindig.",
+    "email": "E-mail",
+    "displayName": "Megjelenített név",
+    "password": "Jelszó",
+    "signIn": "Bejelentkezés",
+    "signUp": "Regisztráció",
+    "signingIn": "Bejelentkezés…",
+    "signingUp": "Fiók létrehozása…",
+    "noAccount": "Még nincs fiókod?",
+    "haveAccount": "Van már fiókod?",
+    "toRegister": "Regisztrálj",
+    "toLogin": "Jelentkezz be",
+    "logout": "Kijelentkezés",
+    "loggedInAs": "Bejelentkezve: {{name}}",
+    "validation": {
+      "emailRequired": "Add meg az e-mail-címed.",
+      "emailInvalid": "Adj meg egy érvényes e-mail-címet.",
+      "displayNameRequired": "Add meg a megjelenített neved.",
+      "displayNameShort": "A megjelenített név legalább 2 karakter legyen.",
+      "passwordRequired": "Add meg a jelszavad.",
+      "passwordShort": "A jelszó legalább 8 karakter legyen."
+    },
+    "error": {
+      "EMAIL_ALREADY_EXISTS": "Ezzel az e-maillel már van fiók.",
+      "INVALID_CREDENTIALS": "Hibás e-mail vagy jelszó.",
+      "VALIDATION_ERROR": "Ellenőrizd a mezőket.",
+      "UNAUTHENTICATED": "A munkamenet lejárt. Jelentkezz be újra.",
+      "NETWORK": "Nem sikerült elérni a szervert. Próbáld újra.",
+      "UNKNOWN_ERROR": "Hiba történt. Próbáld újra."
+    }
   }
 }

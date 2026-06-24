@@ -7,7 +7,9 @@ services:
       POSTGRES_USER: nexa
       POSTGRES_PASSWORD: nexa
     ports:
-      - "5432:5432"
+      # Host-oldalon 5433, hogy ne ütközzön egy gépen futó másik Postgresszel (5432).
+      # A backend a konténerhálózaton belül továbbra is a postgres:5432-t használja.
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -33,6 +35,9 @@ services:
       - "8080:8080"
     environment:
       SPRING_PROFILES_ACTIVE: docker
+      JWT_SECRET: ${JWT_SECRET:-dev-only-secret-change-me-please-32bytes-min!!}
+      POSTGRES_USER: ${POSTGRES_USER:-nexa}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nexa}
     depends_on:
       postgres:
         condition: service_healthy
