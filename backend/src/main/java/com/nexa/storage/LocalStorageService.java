@@ -37,7 +37,8 @@ public class LocalStorageService implements StorageService {
             "image/webp", ".webp",
             "image/gif", ".gif",
             "video/mp4", ".mp4",
-            "video/webm", ".webm");
+            "video/webm", ".webm",
+            "video/x-matroska", ".mkv");
 
     private final Path root;
     private final byte[] signingKey;

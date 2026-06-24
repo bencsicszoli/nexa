@@ -111,6 +111,10 @@ majd a `POST /api/posts` a média-kulcsokkal jön létre (`media: [{key,type,siz
 `post_media` táblában (URL + típus + méret) él. A médiakulcs `posts/` prefixet kap; videóhoz külön, nagyobb
 méretkorlát (`nexa.storage.max-video-bytes`, alap 50 MB). Szöveg nélküli, csak médiát tartalmazó poszt is
 mehet; üres poszt → `EMPTY_POST`. Megjelenítés a `PostCard`-ban: képrács + beágyazott `<video controls>`.
+Támogatott videó: MP4, WebM és **MKV** (`video/x-matroska`); az MKV böngészős lejátszása kodekfüggő.
+A saját poszt **szerkeszthető** (csak a szöveg: `PATCH /api/posts/{id}`) és **törölhető**
+(`DELETE /api/posts/{id}`) — idegen poszt → `POST_NOT_FOUND` (404, a létezést sem szivárogtatjuk);
+a `PostCard` „…" menüjéből, a `ProfilePage` `editable` propján át.
 
 **Tárolás (`#4`-től):** pluggable `StorageService` presigned-URL mintára. Alapból a **`local`** provider
 fut (`nexa.storage.provider=local`): aláírt PUT a `/api/storage/upload`-ra, a fájl lemezre kerül

@@ -79,6 +79,11 @@ public class Post {
         return content;
     }
 
+    /** A szöveg módosítása (szerkesztés, #6 kiegészítés). A média változatlan marad. */
+    public void setContent(String content) {
+        this.content = content;
+    }
+
     public List<PostMedia> getMedia() {
         return media;
     }

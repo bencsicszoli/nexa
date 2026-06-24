@@ -11,6 +11,7 @@ const KNOWN = new Set([
   'PAYLOAD_TOO_LARGE',
   'INVALID_UPLOAD',
   'USER_NOT_FOUND',
+  'POST_NOT_FOUND',
 ])
 
 /**

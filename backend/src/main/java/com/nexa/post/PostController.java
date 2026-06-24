@@ -3,11 +3,14 @@ package com.nexa.post;
 import com.nexa.post.dto.CreatePostRequest;
 import com.nexa.post.dto.PostDto;
 import com.nexa.post.dto.PostMediaUploadRequest;
+import com.nexa.post.dto.UpdatePostRequest;
 import com.nexa.storage.PresignedUpload;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -57,5 +60,21 @@ public class PostController {
     @GetMapping("/user/{userId}")
     public List<PostDto> userPosts(@PathVariable UUID userId) {
         return postService.listByAuthor(userId);
+    }
+
+    /** Egy saját bejegyzés szövegének szerkesztése (a média változatlan). */
+    @PatchMapping("/{id}")
+    public PostDto update(
+            @AuthenticationPrincipal UUID userId,
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdatePostRequest request) {
+        return postService.update(userId, id, request.content());
+    }
+
+    /** Egy saját bejegyzés törlése. */
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@AuthenticationPrincipal UUID userId, @PathVariable UUID id) {
+        postService.delete(userId, id);
     }
 }

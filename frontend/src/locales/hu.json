@@ -37,7 +37,15 @@
   },
   "posts": {
     "myPosts": "Bejegyzéseim",
-    "empty": "Még nem írtál semmit. Oszd meg az első bejegyzésed fent."
+    "empty": "Még nem írtál semmit. Oszd meg az első bejegyzésed fent.",
+    "menu": "Bejegyzés műveletei",
+    "edit": "Szerkesztés",
+    "delete": "Törlés",
+    "save": "Mentés",
+    "saving": "Mentés…",
+    "cancel": "Mégse",
+    "deleting": "Törlés…",
+    "deleteConfirm": "Biztosan törlöd ezt a bejegyzést?"
   },
   "feed": {
     "emptyTitle": "Még üres a hírfolyamod",
@@ -121,6 +129,7 @@
       "PAYLOAD_TOO_LARGE": "A feltöltött fájl túl nagy.",
       "INVALID_UPLOAD": "A feltöltés nem sikerült. Próbáld újra.",
       "USER_NOT_FOUND": "A felhasználó nem található.",
+      "POST_NOT_FOUND": "A bejegyzés nem található.",
       "NETWORK": "Nem sikerült elérni a szervert. Próbáld újra.",
       "UNKNOWN_ERROR": "Hiba történt. Próbáld újra."
     }

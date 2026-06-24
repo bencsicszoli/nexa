@@ -26,6 +26,16 @@ export function getMyPosts(): Promise<Post[]> {
   return apiFetch<Post[]>('/posts/me')
 }
 
+/** Egy saját bejegyzés szövegének szerkesztése (a média változatlan). */
+export function updatePost(id: string, content: string): Promise<Post> {
+  return apiFetch<Post>(`/posts/${id}`, { method: 'PATCH', body: { content } })
+}
+
+/** Egy saját bejegyzés törlése. */
+export function deletePost(id: string): Promise<void> {
+  return apiFetch<void>(`/posts/${id}`, { method: 'DELETE' })
+}
+
 /** Aláírt feltöltési cél kérése egy poszthoz csatolandó kép/videó számára. */
 export function requestPostMediaUploadUrl(contentType: string): Promise<MediaUploadTarget> {
   return apiFetch<MediaUploadTarget>('/posts/media/upload-url', {
@@ -36,12 +46,18 @@ export function requestPostMediaUploadUrl(contentType: string): Promise<MediaUpl
 
 /**
  * A fájl feltöltése közvetlenül az aláírt URL-re (lokálnál a backend, R2-nél az
- * objektumtároló). Nem az apiFetch-en megy: nincs JWT és nincs JSON.
+ * objektumtároló). Nem az apiFetch-en megy: nincs JWT és nincs JSON. A {@code contentType}
+ * explicit, mert egyes formátumoknál (pl. .mkv) a böngésző üres {@code file.type}-ot ad,
+ * és a háttér ezt veti össze az aláírt típussal.
  */
-export async function uploadPostMediaFile(uploadUrl: string, file: File): Promise<void> {
+export async function uploadPostMediaFile(
+  uploadUrl: string,
+  file: File,
+  contentType: string,
+): Promise<void> {
   const res = await fetch(uploadUrl, {
     method: 'PUT',
-    headers: { 'Content-Type': file.type },
+    headers: { 'Content-Type': contentType },
     body: file,
   })
   if (!res.ok) throw new Error(`Media upload failed: ${res.status}`)

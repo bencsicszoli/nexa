@@ -27,7 +27,7 @@ public class PostService {
     private static final Set<String> ALLOWED_IMAGE_TYPES =
             Set.of("image/jpeg", "image/png", "image/webp", "image/gif");
     private static final Set<String> ALLOWED_VIDEO_TYPES =
-            Set.of("video/mp4", "video/webm");
+            Set.of("video/mp4", "video/webm", "video/x-matroska");
 
     private final PostRepository postRepository;
     private final UserRepository userRepository;
@@ -76,6 +76,35 @@ public class PostService {
             }
             return new PostMedia(storageService.publicUrl(item.key()), item.type(), item.sizeBytes());
         }).toList();
+    }
+
+    /** Egy bejegyzés szövegének szerkesztése — csak a szerző teheti. */
+    @Transactional
+    public PostDto update(UUID authorId, UUID postId, String content) {
+        Post post = loadOwnPost(authorId, postId);
+        String normalized = content == null ? "" : content.trim();
+        // Szöveg törölhető, ha a poszton van média; teljesen üres poszt nem maradhat.
+        if (normalized.isEmpty() && post.getMedia().isEmpty()) {
+            throw ApiException.emptyPost();
+        }
+        post.setContent(normalized);
+        return PostDto.from(post);
+    }
+
+    /** Egy bejegyzés törlése — csak a szerző teheti. */
+    @Transactional
+    public void delete(UUID authorId, UUID postId) {
+        Post post = loadOwnPost(authorId, postId);
+        postRepository.delete(post);
+    }
+
+    /** Betölti a posztot, és csak akkor adja vissza, ha a hívó a szerzője (különben 404). */
+    private Post loadOwnPost(UUID authorId, UUID postId) {
+        Post post = postRepository.findById(postId).orElseThrow(ApiException::postNotFound);
+        if (!post.getAuthor().getId().equals(authorId)) {
+            throw ApiException.postNotFound();
+        }
+        return post;
     }
 
     /** Egy felhasználó bejegyzései időrendben (legfrissebb felül). */

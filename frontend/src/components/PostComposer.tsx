@@ -17,9 +17,21 @@ const MAX_MEDIA = 10
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024 // 5 MB — egyezik a backend max-upload-bytes-szal
 const MAX_VIDEO_BYTES = 50 * 1024 * 1024 // 50 MB — egyezik a backend max-video-bytes-szal
 const ALLOWED_IMAGE = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
-const ALLOWED_VIDEO = ['video/mp4', 'video/webm']
+const ALLOWED_VIDEO = ['video/mp4', 'video/webm', 'video/x-matroska']
 const IMAGE_ACCEPT = ALLOWED_IMAGE.join(',')
-const VIDEO_ACCEPT = ALLOWED_VIDEO.join(',')
+// .mkv-nél több böngésző üres MIME-et ad, ezért a kiterjesztést is felsoroljuk.
+const VIDEO_ACCEPT = [...ALLOWED_VIDEO, '.mkv', '.mp4', '.webm'].join(',')
+
+/**
+ * A fájl média-típusa és feltöltendő MIME-je. A {@code file.type} a mérvadó, de ha üres
+ * (jellemzően .mkv-nál), a kiterjesztésből következtetünk. {@code null}, ha nem támogatott.
+ */
+function detectMedia(file: File): { kind: MediaType; contentType: string } | null {
+  if (ALLOWED_IMAGE.includes(file.type)) return { kind: 'IMAGE', contentType: file.type }
+  if (ALLOWED_VIDEO.includes(file.type)) return { kind: 'VIDEO', contentType: file.type }
+  if (/\.mkv$/i.test(file.name)) return { kind: 'VIDEO', contentType: 'video/x-matroska' }
+  return null
+}
 
 /** A composer által kezelt egy-egy csatolt média lokális állapota. */
 type Attachment = {
@@ -77,12 +89,12 @@ export default function PostComposer({ onCreated }: Props) {
         setError('composer.mediaTooMany')
         break
       }
-      const isVideo = ALLOWED_VIDEO.includes(file.type)
-      const isImage = ALLOWED_IMAGE.includes(file.type)
-      if (!isVideo && !isImage) {
+      const detected = detectMedia(file)
+      if (!detected) {
         setError('composer.mediaUnsupported')
         continue
       }
+      const isVideo = detected.kind === 'VIDEO'
       const limit = isVideo ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES
       if (file.size > limit) {
         setError(isVideo ? 'composer.mediaTooLargeVideo' : 'composer.mediaTooLargeImage')
@@ -90,10 +102,9 @@ export default function PostComposer({ onCreated }: Props) {
       }
 
       const id = `att-${attachmentSeq++}`
-      const type: MediaType = isVideo ? 'VIDEO' : 'IMAGE'
       const attachment: Attachment = {
         id,
-        type,
+        type: detected.kind,
         previewUrl: URL.createObjectURL(file),
         sizeBytes: file.size,
         status: 'uploading',
@@ -101,8 +112,8 @@ export default function PostComposer({ onCreated }: Props) {
       setAttachments((prev) => [...prev, attachment])
 
       try {
-        const target = await requestPostMediaUploadUrl(file.type)
-        await uploadPostMediaFile(target.uploadUrl, file)
+        const target = await requestPostMediaUploadUrl(detected.contentType)
+        await uploadPostMediaFile(target.uploadUrl, file, detected.contentType)
         updateAttachment(id, { status: 'done', key: target.key })
       } catch (err) {
         updateAttachment(id, { status: 'error', errorKeyName: errorKey(err) })

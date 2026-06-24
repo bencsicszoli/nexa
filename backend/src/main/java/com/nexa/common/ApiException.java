@@ -44,6 +44,11 @@ public class ApiException extends RuntimeException {
         return new ApiException(HttpStatus.NOT_FOUND, "USER_NOT_FOUND", "User not found.");
     }
 
+    /** Nem létező vagy nem a hívóhoz tartozó bejegyzés (a létezést sem szivárogtatjuk). */
+    public static ApiException postNotFound() {
+        return new ApiException(HttpStatus.NOT_FOUND, "POST_NOT_FOUND", "Post not found.");
+    }
+
     public static ApiException unsupportedImageType() {
         return new ApiException(HttpStatus.BAD_REQUEST, "UNSUPPORTED_IMAGE_TYPE",
                 "Only JPEG, PNG, WebP or GIF images are allowed.");

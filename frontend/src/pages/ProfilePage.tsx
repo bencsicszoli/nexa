@@ -252,7 +252,17 @@ export default function ProfilePage() {
             {t('posts.empty')}
           </p>
         ) : (
-          posts.map((post) => <PostCard key={post.id} post={post} />)
+          posts.map((post) => (
+            <PostCard
+              key={post.id}
+              post={post}
+              editable
+              onUpdated={(updated) =>
+                setPosts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)))
+              }
+              onDeleted={(id) => setPosts((prev) => prev.filter((p) => p.id !== id))}
+            />
+          ))
         )}
       </section>
 

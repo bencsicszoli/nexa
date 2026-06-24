@@ -37,7 +37,15 @@
   },
   "posts": {
     "myPosts": "My posts",
-    "empty": "You haven't posted anything yet. Share your first post above."
+    "empty": "You haven't posted anything yet. Share your first post above.",
+    "menu": "Post actions",
+    "edit": "Edit",
+    "delete": "Delete",
+    "save": "Save",
+    "saving": "Saving…",
+    "cancel": "Cancel",
+    "deleting": "Deleting…",
+    "deleteConfirm": "Delete this post?"
   },
   "feed": {
     "emptyTitle": "Your feed is empty",
@@ -121,6 +129,7 @@
       "PAYLOAD_TOO_LARGE": "The uploaded file is too large.",
       "INVALID_UPLOAD": "The upload could not be completed. Please try again.",
       "USER_NOT_FOUND": "User not found.",
+      "POST_NOT_FOUND": "Post not found.",
       "NETWORK": "Could not reach the server. Please try again.",
       "UNKNOWN_ERROR": "Something went wrong. Please try again."
     }

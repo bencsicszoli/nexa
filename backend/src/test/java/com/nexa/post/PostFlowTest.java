@@ -9,7 +9,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -158,5 +160,83 @@ class PostFlowTest {
                                 {"content":"hopp","media":[{"key":"avatars/x.png","type":"IMAGE","sizeBytes":1}]}"""))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("INVALID_UPLOAD"));
+    }
+
+    @Test
+    void acceptsMkvVideoUploadUrl() throws Exception {
+        String auth = "Bearer " + register("kira@example.com");
+
+        // .mkv (Matroska) képernyőfelvételhez — feltölthető (a böngészős lejátszás kodekfüggő).
+        mockMvc.perform(post("/api/posts/media/upload-url")
+                        .header("Authorization", auth)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"contentType":"video/x-matroska"}"""))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.key").value(org.hamcrest.Matchers.endsWith(".mkv")));
+    }
+
+    private String createPost(String auth, String content) throws Exception {
+        var result = mockMvc.perform(post("/api/posts").header("Authorization", auth)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"content\":\"%s\"}".formatted(content)))
+                .andExpect(status().isCreated())
+                .andReturn();
+        return objectMapper.readTree(result.getResponse().getContentAsString()).get("id").asText();
+    }
+
+    @Test
+    void editOwnPostText() throws Exception {
+        String auth = "Bearer " + register("liv@example.com");
+        String id = createPost(auth, "Eredeti szöveg");
+
+        mockMvc.perform(patch("/api/posts/" + id).header("Authorization", auth)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"content":"Javított szöveg"}"""))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(id))
+                .andExpect(jsonPath("$.content").value("Javított szöveg"));
+
+        // A listában is a javított szöveg jelenik meg.
+        mockMvc.perform(get("/api/posts/me").header("Authorization", auth))
+                .andExpect(jsonPath("$[0].content").value("Javított szöveg"));
+    }
+
+    @Test
+    void rejectsEditAndDeleteByNonAuthor() throws Exception {
+        String owner = "Bearer " + register("owner@example.com");
+        String other = "Bearer " + register("other@example.com");
+        String id = createPost(owner, "A tulaj posztja");
+
+        // Idegen nem szerkesztheti (létezést sem szivárogtatunk → 404).
+        mockMvc.perform(patch("/api/posts/" + id).header("Authorization", other)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"content":"belenyúlok"}"""))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("POST_NOT_FOUND"));
+
+        // Idegen nem törölheti.
+        mockMvc.perform(delete("/api/posts/" + id).header("Authorization", other))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("POST_NOT_FOUND"));
+
+        // A poszt érintetlen.
+        mockMvc.perform(get("/api/posts/me").header("Authorization", owner))
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].content").value("A tulaj posztja"));
+    }
+
+    @Test
+    void deleteOwnPost() throws Exception {
+        String auth = "Bearer " + register("zara@example.com");
+        String id = createPost(auth, "Törlendő poszt");
+
+        mockMvc.perform(delete("/api/posts/" + id).header("Authorization", auth))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(get("/api/posts/me").header("Authorization", auth))
+                .andExpect(jsonPath("$.length()").value(0));
     }
 }
