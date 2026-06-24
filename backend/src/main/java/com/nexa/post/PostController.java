@@ -2,6 +2,8 @@ package com.nexa.post;
 
 import com.nexa.post.dto.CreatePostRequest;
 import com.nexa.post.dto.PostDto;
+import com.nexa.post.dto.PostMediaUploadRequest;
+import com.nexa.storage.PresignedUpload;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,7 +20,8 @@ import java.util.UUID;
 
 /**
  * Bejegyzés-végpontok az {@code /api/posts} prefix alatt — mind hitelesítést igényel.
- * A #5 kártya: létrehozás + saját profil időrendje. A hírfolyam (#10) külön végponton jön.
+ * Létrehozás (szöveg és/vagy média) + saját profil időrendje; a média presigned URL-re
+ * tölt fel. A hírfolyam (#10) külön végponton jön.
  */
 @RestController
 @RequestMapping("/api/posts")
@@ -35,7 +38,13 @@ public class PostController {
     public PostDto create(
             @AuthenticationPrincipal UUID userId,
             @Valid @RequestBody CreatePostRequest request) {
-        return postService.create(userId, request.content());
+        return postService.create(userId, request);
+    }
+
+    /** Aláírt feltöltési cél egy poszthoz csatolandó kép/videó számára. */
+    @PostMapping("/media/upload-url")
+    public PresignedUpload mediaUploadUrl(@Valid @RequestBody PostMediaUploadRequest request) {
+        return postService.createMediaUpload(request.contentType());
     }
 
     /** A bejelentkezett felhasználó saját bejegyzései. */

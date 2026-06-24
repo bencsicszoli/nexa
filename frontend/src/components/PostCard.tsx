@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import Avatar from './Avatar'
-import type { Post } from '../posts/types'
+import type { Post, PostMedia } from '../posts/types'
 
 /** Emberbarát időbélyeg: friss posztoknál relatív, régebbinél lokalizált dátum. */
 function formatTime(iso: string, lang: string): string {
@@ -18,6 +18,44 @@ function formatTime(iso: string, lang: string): string {
   if (diffDay < 7) return rtf.format(-diffDay, 'day')
 
   return date.toLocaleDateString(lang, { year: 'numeric', month: 'short', day: 'numeric' })
+}
+
+/** A poszthoz csatolt média rácsa: képek és beágyazott videolejátszó. */
+function MediaGrid({ media }: { media: PostMedia[] }) {
+  if (media.length === 0) return null
+  // Egy elem teljes szélességben; több elem két oszlopos rácsban.
+  const cols = media.length === 1 ? 'grid-cols-1' : 'grid-cols-2'
+
+  return (
+    <div className={`mt-3 grid gap-2 ${cols}`}>
+      {media.map((m, i) =>
+        m.type === 'VIDEO' ? (
+          <video
+            key={i}
+            src={m.url}
+            controls
+            preload="metadata"
+            className="max-h-[28rem] w-full rounded-xl border border-slate-200 bg-black"
+          />
+        ) : (
+          <a
+            key={i}
+            href={m.url}
+            target="_blank"
+            rel="noreferrer"
+            className="block overflow-hidden rounded-xl border border-slate-200"
+          >
+            <img
+              src={m.url}
+              alt=""
+              loading="lazy"
+              className="max-h-[28rem] w-full object-cover"
+            />
+          </a>
+        ),
+      )}
+    </div>
+  )
 }
 
 export default function PostCard({ post }: { post: Post }) {
@@ -39,7 +77,12 @@ export default function PostCard({ post }: { post: Post }) {
         </div>
       </header>
       {/* whitespace-pre-wrap: a felhasználó sortörései és szóközei megmaradnak */}
-      <p className="mt-3 whitespace-pre-wrap break-words text-sm text-slate-700">{post.content}</p>
+      {post.content && (
+        <p className="mt-3 whitespace-pre-wrap break-words text-sm text-slate-700">
+          {post.content}
+        </p>
+      )}
+      <MediaGrid media={post.media} />
     </article>
   )
 }

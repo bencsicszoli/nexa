@@ -49,6 +49,16 @@ public class ApiException extends RuntimeException {
                 "Only JPEG, PNG, WebP or GIF images are allowed.");
     }
 
+    public static ApiException unsupportedMediaType() {
+        return new ApiException(HttpStatus.BAD_REQUEST, "UNSUPPORTED_MEDIA_TYPE",
+                "Only image (JPEG, PNG, WebP, GIF) or video (MP4, WebM) files are allowed.");
+    }
+
+    public static ApiException emptyPost() {
+        return new ApiException(HttpStatus.BAD_REQUEST, "EMPTY_POST",
+                "A post must have text or at least one media attachment.");
+    }
+
     public static ApiException payloadTooLarge() {
         return new ApiException(HttpStatus.PAYLOAD_TOO_LARGE, "PAYLOAD_TOO_LARGE",
                 "The uploaded file is too large.");

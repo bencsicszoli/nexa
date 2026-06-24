@@ -1,5 +1,6 @@
 package com.nexa.post;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +11,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -52,6 +54,7 @@ class PostFlowTest {
                 .andExpect(jsonPath("$.id").isNotEmpty())
                 .andExpect(jsonPath("$.content").value("Szia, Nexa! Ez az első posztom."))
                 .andExpect(jsonPath("$.authorName").value("Dana"))
+                .andExpect(jsonPath("$.media.length()").value(0))
                 .andExpect(jsonPath("$.createdAt").isNotEmpty());
 
         // Második bejegyzés.
@@ -70,7 +73,7 @@ class PostFlowTest {
     }
 
     @Test
-    void rejectsUnauthenticatedAndBlankContent() throws Exception {
+    void rejectsUnauthenticatedAndEmptyPost() throws Exception {
         // Token nélkül védett.
         mockMvc.perform(post("/api/posts")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -80,12 +83,80 @@ class PostFlowTest {
 
         String auth = "Bearer " + register("erik@example.com");
 
-        // Üres tartalom → validációs hiba.
+        // Sem szöveg, sem média → EMPTY_POST.
         mockMvc.perform(post("/api/posts").header("Authorization", auth)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"content":"   "}"""))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+                .andExpect(jsonPath("$.code").value("EMPTY_POST"));
+    }
+
+    @Test
+    void uploadMediaAndCreatePostWithImage() throws Exception {
+        String auth = "Bearer " + register("mira@example.com");
+
+        // 1) Aláírt feltöltési cél kérése képhez.
+        var uploadResult = mockMvc.perform(post("/api/posts/media/upload-url")
+                        .header("Authorization", auth)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"contentType":"image/png"}"""))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.uploadUrl").isNotEmpty())
+                .andExpect(jsonPath("$.key").isNotEmpty())
+                .andReturn();
+        JsonNode upload = objectMapper.readTree(uploadResult.getResponse().getContentAsString());
+        String uploadUrl = upload.get("uploadUrl").asText();
+        String key = upload.get("key").asText();
+
+        // 2) A bájtok feltöltése az aláírt URL-re (lokál tárolónál a backend nyeli el).
+        byte[] fakePng = new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A};
+        mockMvc.perform(put(uploadUrl)
+                        .contentType(MediaType.IMAGE_PNG)
+                        .content(fakePng))
+                .andExpect(status().isNoContent());
+
+        // 3) Poszt létrehozása a feltöltött média kulcsával (szöveg nélkül is mehet).
+        mockMvc.perform(post("/api/posts").header("Authorization", auth)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"content":"","media":[{"key":"%s","type":"IMAGE","sizeBytes":8}]}"""
+                                .formatted(key)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.media.length()").value(1))
+                .andExpect(jsonPath("$.media[0].type").value("IMAGE"))
+                .andExpect(jsonPath("$.media[0].url").value("/api/media/" + key))
+                .andExpect(jsonPath("$.media[0].sizeBytes").value(8));
+
+        // 4) A feltöltött kép kiszolgálható a publikus URL-ről.
+        mockMvc.perform(get("/api/media/" + key))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void rejectsUnsupportedMediaType() throws Exception {
+        String auth = "Bearer " + register("nora@example.com");
+
+        mockMvc.perform(post("/api/posts/media/upload-url")
+                        .header("Authorization", auth)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"contentType":"application/zip"}"""))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("UNSUPPORTED_MEDIA_TYPE"));
+    }
+
+    @Test
+    void rejectsMediaKeyOutsidePostsPrefix() throws Exception {
+        String auth = "Bearer " + register("pepe@example.com");
+
+        // Más mappára (pl. avatars/) mutató kulcs nem fogadható el poszt-médiaként.
+        mockMvc.perform(post("/api/posts").header("Authorization", auth)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"content":"hopp","media":[{"key":"avatars/x.png","type":"IMAGE","sizeBytes":1}]}"""))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_UPLOAD"));
     }
 }

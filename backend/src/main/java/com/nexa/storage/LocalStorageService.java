@@ -43,16 +43,19 @@ public class LocalStorageService implements StorageService {
     private final byte[] signingKey;
     private final long uploadTtlSeconds;
     private final long maxUploadBytes;
+    private final long maxVideoBytes;
 
     public LocalStorageService(
             @Value("${nexa.storage.local.dir}") String dir,
             @Value("${nexa.storage.local.secret}") String secret,
             @Value("${nexa.storage.local.upload-ttl-seconds:300}") long uploadTtlSeconds,
-            @Value("${nexa.storage.max-upload-bytes:5242880}") long maxUploadBytes) {
+            @Value("${nexa.storage.max-upload-bytes:5242880}") long maxUploadBytes,
+            @Value("${nexa.storage.max-video-bytes:52428800}") long maxVideoBytes) {
         this.root = Path.of(dir).toAbsolutePath().normalize();
         this.signingKey = secret.getBytes(StandardCharsets.UTF_8);
         this.uploadTtlSeconds = uploadTtlSeconds;
         this.maxUploadBytes = maxUploadBytes;
+        this.maxVideoBytes = maxVideoBytes;
         try {
             Files.createDirectories(root);
         } catch (IOException e) {
@@ -89,7 +92,9 @@ public class LocalStorageService implements StorageService {
         if (body == null || body.length == 0) {
             throw ApiException.invalidUpload();
         }
-        if (body.length > maxUploadBytes) {
+        // Videóhoz nagyobb felső korlát, mint képhez (lásd nexa.storage.max-video-bytes).
+        long limit = target.contentType().startsWith("video/") ? maxVideoBytes : maxUploadBytes;
+        if (body.length > limit) {
             throw ApiException.payloadTooLarge();
         }
         Path dest = resolveWithinRoot(target.key());

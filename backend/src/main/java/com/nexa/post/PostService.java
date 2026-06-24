@@ -1,35 +1,81 @@
 package com.nexa.post;
 
 import com.nexa.common.ApiException;
+import com.nexa.post.dto.CreatePostRequest;
 import com.nexa.post.dto.PostDto;
+import com.nexa.storage.PresignedUpload;
+import com.nexa.storage.StorageService;
 import com.nexa.user.User;
 import com.nexa.user.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
- * Bejegyzések üzleti logikája. A #5 kártya a létrehozást és a saját profilon
- * való listázást fedi le; a hírfolyam-aggregáció (#10) külön kártya.
+ * Bejegyzések üzleti logikája: létrehozás (szöveg és/vagy kép/videó) és a saját
+ * profilon való listázás. A média presigned URL-re kerül fel (lásd {@link StorageService}),
+ * a poszt csak a tárolóbeli kulcsra hivatkozik. A hírfolyam-aggregáció (#10) külön kártya.
  */
 @Service
 public class PostService {
 
+    /** A poszt-médiák logikai mappája a tárolóban. */
+    private static final String MEDIA_PREFIX = "posts";
+    private static final Set<String> ALLOWED_IMAGE_TYPES =
+            Set.of("image/jpeg", "image/png", "image/webp", "image/gif");
+    private static final Set<String> ALLOWED_VIDEO_TYPES =
+            Set.of("video/mp4", "video/webm");
+
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final StorageService storageService;
 
-    public PostService(PostRepository postRepository, UserRepository userRepository) {
+    public PostService(PostRepository postRepository, UserRepository userRepository,
+                       StorageService storageService) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
+        this.storageService = storageService;
+    }
+
+    /** Aláírt média-feltöltési cél; csak engedélyezett kép/videó típust enged. */
+    public PresignedUpload createMediaUpload(String contentType) {
+        String normalized = contentType == null ? "" : contentType.trim().toLowerCase();
+        if (!ALLOWED_IMAGE_TYPES.contains(normalized) && !ALLOWED_VIDEO_TYPES.contains(normalized)) {
+            throw ApiException.unsupportedMediaType();
+        }
+        return storageService.createUpload(MEDIA_PREFIX, normalized);
     }
 
     @Transactional
-    public PostDto create(UUID authorId, String content) {
+    public PostDto create(UUID authorId, CreatePostRequest request) {
         User author = userRepository.findById(authorId).orElseThrow(ApiException::userNotFound);
-        Post post = postRepository.save(new Post(author, content.trim()));
+
+        String content = request.content() == null ? "" : request.content().trim();
+        List<PostMedia> media = toMedia(request.media());
+
+        // A poszthoz legalább szöveg vagy egy média kell.
+        if (content.isEmpty() && media.isEmpty()) {
+            throw ApiException.emptyPost();
+        }
+
+        Post post = postRepository.save(new Post(author, content, media));
         return PostDto.from(post);
+    }
+
+    private List<PostMedia> toMedia(List<CreatePostRequest.MediaItem> items) {
+        if (items == null || items.isEmpty()) {
+            return List.of();
+        }
+        return items.stream().map(item -> {
+            // Csak a poszt-média mappába mutató kulcsot fogadunk el (nem tetszőleges objektum).
+            if (item.key() == null || !item.key().startsWith(MEDIA_PREFIX + "/")) {
+                throw ApiException.invalidUpload();
+            }
+            return new PostMedia(storageService.publicUrl(item.key()), item.type(), item.sizeBytes());
+        }).toList();
     }
 
     /** Egy felhasználó bejegyzései időrendben (legfrissebb felül). */

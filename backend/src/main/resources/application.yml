@@ -33,7 +33,8 @@ nexa:
     # local (alap): lemezre ment, /api/media-ról szolgál ki — nincs külső infra.
     # s3 (#6): valódi R2/S3 presigned URL ugyanezzel a frontend-szerződéssel.
     provider: ${STORAGE_PROVIDER:local}
-    max-upload-bytes: 5242880            # 5 MB feltöltési felső korlát
+    max-upload-bytes: 5242880            # 5 MB felső korlát képhez
+    max-video-bytes: 52428800            # 50 MB felső korlát videóhoz
     local:
       dir: ${STORAGE_LOCAL_DIR:data/media}
       # A feltöltési tokenek aláírókulcsa; alapból a JWT-titok.
