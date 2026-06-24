@@ -1,0 +1,50 @@
+{
+  "brand": {
+    "tagline": "Reklámmentes, előfizetéses közösségi platform"
+  },
+  "topbar": {
+    "searchPlaceholder": "Keresés a Nexán…",
+    "home": "Kezdőlap",
+    "messages": "Üzenetek",
+    "notifications": "Értesítések",
+    "openMenu": "Menü megnyitása"
+  },
+  "nav": {
+    "feed": "Hírfolyam",
+    "friends": "Ismerősök",
+    "groups": "Csoportok",
+    "profile": "Profilom",
+    "media": "Médiatár",
+    "settings": "Beállítások",
+    "myGroups": "Csoportjaim"
+  },
+  "composer": {
+    "placeholder": "Mi jár a fejedben?",
+    "photo": "Fotó",
+    "video": "Videó",
+    "text": "Szöveg"
+  },
+  "feed": {
+    "emptyTitle": "Még üres a hírfolyamod",
+    "emptySubtitle": "Itt jelennek meg majd időrendben az ismerőseid, a követett alkotók és a csoportjaid bejegyzései — legfrissebb felül."
+  },
+  "right": {
+    "newPostToast": "{{name}} új bejegyzést töltött fel",
+    "newPostHint": "Kattints a hírfolyam frissítéséhez",
+    "friends": "Ismerősök",
+    "followedCreators": "Követett alkotók",
+    "premiumTitle": "Nexa Premium",
+    "premiumDesc": "Reklámmentes élmény.",
+    "premiumTrial": "A próbaidőből még {{days}} nap van hátra.",
+    "premiumManage": "Előfizetés kezelése"
+  },
+  "page": {
+    "comingSoon": "Ez a szakasz hamarosan elérhető.",
+    "comingSoonHint": "A(z) „{{section}}\" funkciót egy későbbi kártya valósítja meg."
+  },
+  "lang": {
+    "switchTo": "Váltás erre: {{lang}}",
+    "hu": "Magyar",
+    "en": "Angol"
+  }
+}

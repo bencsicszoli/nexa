@@ -1,0 +1,50 @@
+{
+  "brand": {
+    "tagline": "Ad-free, subscription-based social platform"
+  },
+  "topbar": {
+    "searchPlaceholder": "Search on Nexa…",
+    "home": "Home",
+    "messages": "Messages",
+    "notifications": "Notifications",
+    "openMenu": "Open menu"
+  },
+  "nav": {
+    "feed": "Feed",
+    "friends": "Friends",
+    "groups": "Groups",
+    "profile": "My profile",
+    "media": "Media library",
+    "settings": "Settings",
+    "myGroups": "My groups"
+  },
+  "composer": {
+    "placeholder": "What's on your mind?",
+    "photo": "Photo",
+    "video": "Video",
+    "text": "Text"
+  },
+  "feed": {
+    "emptyTitle": "Your feed is empty",
+    "emptySubtitle": "Posts from your friends, followed creators and groups will appear here in chronological order — newest first."
+  },
+  "right": {
+    "newPostToast": "{{name}} shared a new post",
+    "newPostHint": "Click to refresh your feed",
+    "friends": "Friends",
+    "followedCreators": "Followed creators",
+    "premiumTitle": "Nexa Premium",
+    "premiumDesc": "An ad-free experience.",
+    "premiumTrial": "{{days}} days left in your trial.",
+    "premiumManage": "Manage subscription"
+  },
+  "page": {
+    "comingSoon": "This section is coming soon.",
+    "comingSoonHint": "The \"{{section}}\" feature will be built in a later card."
+  },
+  "lang": {
+    "switchTo": "Switch to {{lang}}",
+    "hu": "Hungarian",
+    "en": "English"
+  }
+}
