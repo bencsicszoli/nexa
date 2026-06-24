@@ -57,7 +57,12 @@
     "saved": "A profil frissült.",
     "avatarUpdated": "Az avatar frissült.",
     "avatarRemoved": "Az avatar eltávolítva.",
-    "memberSince": "Tag {{date}} óta"
+    "memberSince": "Tag {{date}} óta",
+    "cropTitle": "Avatar igazítása",
+    "cropHint": "Húzd a megfelelő helyre, a csúszkával pedig nagyíts.",
+    "zoom": "Nagyítás",
+    "cropApply": "Alkalmaz",
+    "cropCancel": "Mégse"
   },
   "lang": {
     "switchTo": "Váltás erre: {{lang}}",

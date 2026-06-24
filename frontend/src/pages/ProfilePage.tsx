@@ -2,6 +2,7 @@ import { useRef, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Camera, Loader2, Trash2 } from 'lucide-react'
 import Avatar from '../components/Avatar'
+import AvatarCropper from '../components/AvatarCropper'
 import { useAuth } from '../auth/AuthContext'
 import { errorKey } from '../auth/errorKey'
 import {
@@ -25,6 +26,8 @@ export default function ProfilePage() {
   const [bio, setBio] = useState(user?.bio ?? '')
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
+  // A kivágásra váró, épp kiválasztott fájl (megnyitja a kivágó ablakot).
+  const [pendingFile, setPendingFile] = useState<File | null>(null)
   // Visszajelzés: vagy egy siker-, vagy egy hibaüzenet-kulcs.
   const [feedback, setFeedback] = useState<{ kind: 'ok' | 'error'; key: string } | null>(null)
 
@@ -51,7 +54,7 @@ export default function ProfilePage() {
     }
   }
 
-  async function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
+  function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     e.target.value = '' // hogy ugyanaz a fájl újra kiválasztható legyen
     if (!file) return
@@ -65,11 +68,19 @@ export default function ProfilePage() {
       setFeedback({ kind: 'error', key: 'auth.error.PAYLOAD_TOO_LARGE' })
       return
     }
+    // A feltöltés a kivágás megerősítése után indul (lásd onCropped).
+    setPendingFile(file)
+  }
 
+  // A kivágóból kapott négyzetes kép (image/jpeg) feltöltése.
+  async function onCropped(blob: Blob) {
+    setPendingFile(null)
     setUploading(true)
     try {
-      const target = await requestAvatarUploadUrl(file.type)
-      await uploadAvatarFile(target.uploadUrl, file)
+      const contentType = 'image/jpeg'
+      const cropped = new File([blob], 'avatar.jpg', { type: contentType })
+      const target = await requestAvatarUploadUrl(contentType)
+      await uploadAvatarFile(target.uploadUrl, cropped)
       const updated = await confirmAvatar(target.key)
       updateUser(updated)
       setFeedback({ kind: 'ok', key: 'profile.avatarUpdated' })
@@ -196,6 +207,14 @@ export default function ProfilePage() {
           )}
         </div>
       </form>
+
+      {pendingFile && (
+        <AvatarCropper
+          file={pendingFile}
+          onCancel={() => setPendingFile(null)}
+          onConfirm={onCropped}
+        />
+      )}
     </div>
   )
 }

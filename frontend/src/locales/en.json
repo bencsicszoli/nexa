@@ -57,7 +57,12 @@
     "saved": "Profile updated.",
     "avatarUpdated": "Avatar updated.",
     "avatarRemoved": "Avatar removed.",
-    "memberSince": "Member since {{date}}"
+    "memberSince": "Member since {{date}}",
+    "cropTitle": "Adjust your avatar",
+    "cropHint": "Drag to reposition and use the slider to zoom.",
+    "zoom": "Zoom",
+    "cropApply": "Apply",
+    "cropCancel": "Cancel"
   },
   "lang": {
     "switchTo": "Switch to {{lang}}",

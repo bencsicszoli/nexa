@@ -44,6 +44,10 @@ A megvalósítás a **GitHub Project (#7)** alapján megy, **kártyáról kárty
   kézi happy-path ellenőrzést). A commit/PR `Closes #N`-nel zárja az issue-t.
 - Ezután **ÁLLJ MEG és értesítsd a felhasználót**, hogy ellenőrizze az eredményt a böngészőben — ne lépj át
   automatikusan a következő kártyára. Korrekció után folytasd.
+- **Tesztelés után MINDIG zárd be a 8080-as portot:** ha a teszthez magad indítottad a backendet (akár
+  háttérben), állítsd le, mielőtt visszaadod a vezérlést — különben a felhasználó saját `mvn spring-boot:run`-ja
+  „port already in use" hibával elhasal. Parancs: `pkill -f 'spring-boot:run|NexaApplication'`, majd ellenőrizd
+  `ss -ltnp | grep ':8080'`-nal, hogy felszabadult.
 
 Git: a commit szerző e-mail a GitHub **noreply** cím legyen
 (`171580038+bencsicszoli@users.noreply.github.com`) — a privát e-maillel a push elutasításra kerül.
@@ -57,6 +61,8 @@ mvn test                                   # összes teszt
 mvn test -Dtest=HealthControllerTest       # egy teszt
 mvn test -Dtest=HealthControllerTest#healthReturnsUp   # egy metódus
 mvn clean package                          # JAR build
+# Teszthez indított backend leállítása (KÖTELEZŐ, hogy a 8080 felszabaduljon):
+pkill -f 'spring-boot:run|NexaApplication'; ss -ltnp | grep ':8080' || echo "8080 szabad"
 
 # Frontend (http://localhost:5173 — a /api a 8080-ra proxyzva)
 cd frontend && npm install && npm run dev
