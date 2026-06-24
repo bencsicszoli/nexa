@@ -42,6 +42,23 @@
     "comingSoon": "This section is coming soon.",
     "comingSoonHint": "The \"{{section}}\" feature will be built in a later card."
   },
+  "profile": {
+    "title": "My profile",
+    "subtitle": "Manage your name, bio and avatar.",
+    "displayName": "Display name",
+    "bio": "Bio",
+    "bioPlaceholder": "Tell others a bit about yourself…",
+    "changeAvatar": "Change avatar",
+    "removeAvatar": "Remove",
+    "uploading": "Uploading…",
+    "avatarHint": "JPG, PNG, WebP or GIF, up to 5 MB.",
+    "save": "Save changes",
+    "saving": "Saving…",
+    "saved": "Profile updated.",
+    "avatarUpdated": "Avatar updated.",
+    "avatarRemoved": "Avatar removed.",
+    "memberSince": "Member since {{date}}"
+  },
   "lang": {
     "switchTo": "Switch to {{lang}}",
     "hu": "Hungarian",
@@ -78,6 +95,10 @@
       "INVALID_CREDENTIALS": "Invalid email or password.",
       "VALIDATION_ERROR": "Please check the form fields.",
       "UNAUTHENTICATED": "Your session has expired. Please sign in again.",
+      "UNSUPPORTED_IMAGE_TYPE": "Only JPG, PNG, WebP or GIF images are allowed.",
+      "PAYLOAD_TOO_LARGE": "The image is too large (max 5 MB).",
+      "INVALID_UPLOAD": "The upload could not be completed. Please try again.",
+      "USER_NOT_FOUND": "User not found.",
       "NETWORK": "Could not reach the server. Please try again.",
       "UNKNOWN_ERROR": "Something went wrong. Please try again."
     }

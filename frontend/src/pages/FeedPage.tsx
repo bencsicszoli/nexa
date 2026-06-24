@@ -12,7 +12,7 @@ export default function FeedPage() {
       {/* Szerkesztődoboz — a valódi posztolást az #5/#6 kártya köti be */}
       <section className="rounded-2xl border border-slate-200 bg-white p-4">
         <div className="flex items-center gap-3">
-          <Avatar name={user?.displayName ?? 'Nexa'} size="md" />
+          <Avatar name={user?.displayName ?? 'Nexa'} src={user?.avatarUrl} size="md" />
           <input
             type="text"
             placeholder={t('composer.placeholder')}

@@ -95,8 +95,14 @@ Konvenciók a meglévő vázból (kövesd új kódnál is):
 
 ## Állapot
 
-`#1` (váz + health check), `#2` (app shell + i18n) és `#3` (regisztráció/bejelentkezés JWT-vel)
-**kész és lezárva**. A következő `#4` (profil: szerkesztés + avatar R2-be).
+`#1` (váz + health check), `#2` (app shell + i18n), `#3` (regisztráció/bejelentkezés JWT-vel) és
+`#4` (profil: szerkesztés + avatar) **kész és lezárva**. A következő `#5` (szöveges bejegyzés létrehozása).
+
+**Tárolás (`#4`-től):** pluggable `StorageService` presigned-URL mintára. Alapból a **`local`** provider
+fut (`nexa.storage.provider=local`): aláírt PUT a `/api/storage/upload`-ra, a fájl lemezre kerül
+(`nexa.storage.local.dir`, alap `backend/data/media`, gitignore-olt), kiszolgálás a publikus
+`GET /api/media/**` alól — külső infra nélkül azonnal tesztelhető. Az **`s3`** provider (R2 presigned URL,
+`#6`) ugyanezt a frontend-szerződést valósítja meg, így átálláskor a frontend nem változik, csak az env.
 
 **Dev-adatbázis (3. kártyától):** a fejlesztőgépen az 5432-es porton másik Postgres fut, ezért a
 Nexa Postgres Dockerből a **5433** host-porton megy (`docker compose up -d postgres redis`). A backend

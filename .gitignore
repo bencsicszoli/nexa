@@ -9,6 +9,10 @@ target/
 !.mvn/wrapper/maven-wrapper.jar
 *.class
 
+# --- Lokál objektumtároló (fejlesztői avatar/média feltöltések) ---
+backend/data/
+data/
+
 # --- Környezeti változók / titkok ---
 .env
 .env.*

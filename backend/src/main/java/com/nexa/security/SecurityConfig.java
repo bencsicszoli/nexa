@@ -51,6 +51,9 @@ public class SecurityConfig {
                                 "/api/auth/refresh", "/api/auth/logout").permitAll()
                         .requestMatchers("/api/health").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
+                        // Médiakiszolgálás publikus; a feltöltést az aláírt token védi (#4 lokál tároló).
+                        .requestMatchers(HttpMethod.GET, "/api/media/**").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/api/storage/upload").permitAll()
                         // minden más (köztük a GET /api/auth/me) hitelesítést igényel
                         .anyRequest().authenticated())
                 .exceptionHandling(eh -> eh.authenticationEntryPoint((request, response, ex) -> {

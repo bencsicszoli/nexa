@@ -4,6 +4,8 @@ export type User = {
   id: string
   email: string
   displayName: string
+  bio: string | null
+  avatarUrl: string | null
   role: string
   createdAt: string
 }

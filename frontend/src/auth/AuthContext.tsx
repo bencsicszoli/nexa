@@ -17,6 +17,8 @@ type AuthContextValue = {
   login: (email: string, password: string) => Promise<void>
   register: (email: string, displayName: string, password: string) => Promise<void>
   logout: () => Promise<void>
+  /** A bejelentkezett felhasználó adatainak frissítése (pl. profilszerkesztés után). */
+  updateUser: (user: User) => void
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -78,6 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(null)
         setStatus('unauthenticated')
       },
+      updateUser: (next) => setUser(next),
     }),
     [user, status],
   )

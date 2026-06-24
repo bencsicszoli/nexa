@@ -29,6 +29,16 @@ nexa:
     secret: ${JWT_SECRET:dev-only-secret-change-me-please-32bytes-min!!}
     access-token-ttl-seconds: 900        # 15 perc
     refresh-token-ttl-seconds: 604800    # 7 nap
+  storage:
+    # local (alap): lemezre ment, /api/media-ról szolgál ki — nincs külső infra.
+    # s3 (#6): valódi R2/S3 presigned URL ugyanezzel a frontend-szerződéssel.
+    provider: ${STORAGE_PROVIDER:local}
+    max-upload-bytes: 5242880            # 5 MB feltöltési felső korlát
+    local:
+      dir: ${STORAGE_LOCAL_DIR:data/media}
+      # A feltöltési tokenek aláírókulcsa; alapból a JWT-titok.
+      secret: ${nexa.jwt.secret}
+      upload-ttl-seconds: 300            # az aláírt feltöltési link 5 percig él
 
 management:
   endpoints:

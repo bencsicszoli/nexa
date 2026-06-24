@@ -9,6 +9,8 @@ public record UserDto(
         String id,
         String email,
         String displayName,
+        String bio,
+        String avatarUrl,
         String role,
         Instant createdAt) {
 
@@ -17,6 +19,8 @@ public record UserDto(
                 user.getId().toString(),
                 user.getEmail(),
                 user.getDisplayName(),
+                user.getBio(),
+                user.getAvatarUrl(),
                 user.getRole().name(),
                 user.getCreatedAt());
     }

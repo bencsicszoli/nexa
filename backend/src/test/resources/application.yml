@@ -17,3 +17,10 @@ nexa:
     secret: "test-secret-test-secret-test-secret-32b!"
     access-token-ttl-seconds: 900
     refresh-token-ttl-seconds: 604800
+  storage:
+    provider: local
+    max-upload-bytes: 5242880
+    local:
+      dir: ${java.io.tmpdir}/nexa-test-media
+      secret: ${nexa.jwt.secret}
+      upload-ttl-seconds: 300

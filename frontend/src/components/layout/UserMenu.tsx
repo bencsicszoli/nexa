@@ -40,7 +40,7 @@ export default function UserMenu() {
         aria-haspopup="menu"
         aria-expanded={open}
       >
-        <Avatar name={name || 'Nexa'} size="sm" />
+        <Avatar name={name || 'Nexa'} src={user?.avatarUrl} size="sm" />
       </button>
 
       {open && (

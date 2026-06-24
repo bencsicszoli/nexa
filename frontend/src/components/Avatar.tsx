@@ -1,6 +1,8 @@
 type AvatarProps = {
   /** Megjelenítendő név — ebből generáljuk a monogramot és a háttérszínt. */
   name: string
+  /** Ha van feltöltött avatar-kép, ennek az URL-jét jelenítjük meg a monogram helyett. */
+  src?: string | null
   size?: 'sm' | 'md' | 'lg'
   className?: string
 }
@@ -37,7 +39,16 @@ function initials(name: string): string {
   return (first + last).toUpperCase()
 }
 
-export default function Avatar({ name, size = 'md', className = '' }: AvatarProps) {
+export default function Avatar({ name, src, size = 'md', className = '' }: AvatarProps) {
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt={name}
+        className={`inline-block shrink-0 rounded-full object-cover ${SIZES[size]} ${className}`}
+      />
+    )
+  }
   return (
     <span
       className={`inline-flex shrink-0 items-center justify-center rounded-full font-semibold text-white ${colorFor(

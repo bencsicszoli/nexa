@@ -42,6 +42,23 @@
     "comingSoon": "Ez a szakasz hamarosan elérhető.",
     "comingSoonHint": "A(z) „{{section}}\" funkciót egy későbbi kártya valósítja meg."
   },
+  "profile": {
+    "title": "Profilom",
+    "subtitle": "Kezeld a neved, a bemutatkozásod és az avatarod.",
+    "displayName": "Megjelenített név",
+    "bio": "Bemutatkozás",
+    "bioPlaceholder": "Mesélj egy kicsit magadról…",
+    "changeAvatar": "Avatar módosítása",
+    "removeAvatar": "Eltávolítás",
+    "uploading": "Feltöltés…",
+    "avatarHint": "JPG, PNG, WebP vagy GIF, legfeljebb 5 MB.",
+    "save": "Mentés",
+    "saving": "Mentés…",
+    "saved": "A profil frissült.",
+    "avatarUpdated": "Az avatar frissült.",
+    "avatarRemoved": "Az avatar eltávolítva.",
+    "memberSince": "Tag {{date}} óta"
+  },
   "lang": {
     "switchTo": "Váltás erre: {{lang}}",
     "hu": "Magyar",
@@ -78,6 +95,10 @@
       "INVALID_CREDENTIALS": "Hibás e-mail vagy jelszó.",
       "VALIDATION_ERROR": "Ellenőrizd a mezőket.",
       "UNAUTHENTICATED": "A munkamenet lejárt. Jelentkezz be újra.",
+      "UNSUPPORTED_IMAGE_TYPE": "Csak JPG, PNG, WebP vagy GIF kép tölthető fel.",
+      "PAYLOAD_TOO_LARGE": "A kép túl nagy (legfeljebb 5 MB).",
+      "INVALID_UPLOAD": "A feltöltés nem sikerült. Próbáld újra.",
+      "USER_NOT_FOUND": "A felhasználó nem található.",
       "NETWORK": "Nem sikerült elérni a szervert. Próbáld újra.",
       "UNKNOWN_ERROR": "Hiba történt. Próbáld újra."
     }
