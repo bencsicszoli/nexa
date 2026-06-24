@@ -3,6 +3,7 @@ package com.nexa.post;
 import com.nexa.common.ApiException;
 import com.nexa.post.dto.CreatePostRequest;
 import com.nexa.post.dto.PostDto;
+import com.nexa.storage.DeferredStorageDeleter;
 import com.nexa.storage.PresignedUpload;
 import com.nexa.storage.StorageService;
 import com.nexa.user.User;
@@ -32,12 +33,14 @@ public class PostService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final StorageService storageService;
+    private final DeferredStorageDeleter storageDeleter;
 
     public PostService(PostRepository postRepository, UserRepository userRepository,
-                       StorageService storageService) {
+                       StorageService storageService, DeferredStorageDeleter storageDeleter) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.storageService = storageService;
+        this.storageDeleter = storageDeleter;
     }
 
     /** Aláírt média-feltöltési cél; csak engedélyezett kép/videó típust enged. */
@@ -91,11 +94,16 @@ public class PostService {
         return PostDto.from(post);
     }
 
-    /** Egy bejegyzés törlése — csak a szerző teheti. */
+    /** Egy bejegyzés törlése — csak a szerző teheti; a csatolt médiafájlok is törlődnek. */
     @Transactional
     public void delete(UUID authorId, UUID postId) {
         Post post = loadOwnPost(authorId, postId);
+        // A média kulcsait a DB-rekord törlése ELŐTT gyűjtjük ki; a fájltörlés commit után fut.
+        List<String> mediaKeys = post.getMedia().stream()
+                .map(m -> storageService.keyFromPublicUrl(m.getUrl()))
+                .toList();
         postRepository.delete(post);
+        storageDeleter.deleteAfterCommit(mediaKeys);
     }
 
     /** Betölti a posztot, és csak akkor adja vissza, ha a hívó a szerzője (különben 404). */

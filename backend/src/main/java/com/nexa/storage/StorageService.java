@@ -23,4 +23,18 @@ public interface StorageService {
 
     /** Egy tárolt objektum publikus URL-je (ezt teszi a frontend pl. img src-be). */
     String publicUrl(String key);
+
+    /**
+     * A {@link #publicUrl(String)} párja: a publikus URL-ből visszafejtett tárolókulcs,
+     * vagy {@code null}, ha az URL nem ehhez a tárolóhoz tartozik (pl. külső URL).
+     * Így a kulcsot nem kell külön perzisztálni a metaadat mellett.
+     */
+    String keyFromPublicUrl(String publicUrl);
+
+    /**
+     * Egy tárolt objektum törlése a kulcsa alapján. Best-effort: ha az objektum már
+     * nincs meg, az nem hiba. Árva fájlok elkerülésére hívandó (poszt törlése,
+     * avatar cseréje/eltávolítása) — célszerűen a DB-tranzakció commitja után.
+     */
+    void delete(String key);
 }

@@ -2,6 +2,7 @@ package com.nexa.profile;
 
 import com.nexa.auth.dto.UserDto;
 import com.nexa.common.ApiException;
+import com.nexa.storage.DeferredStorageDeleter;
 import com.nexa.storage.PresignedUpload;
 import com.nexa.storage.StorageService;
 import com.nexa.user.User;
@@ -9,6 +10,7 @@ import com.nexa.user.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -26,10 +28,13 @@ public class ProfileService {
 
     private final UserRepository userRepository;
     private final StorageService storageService;
+    private final DeferredStorageDeleter storageDeleter;
 
-    public ProfileService(UserRepository userRepository, StorageService storageService) {
+    public ProfileService(UserRepository userRepository, StorageService storageService,
+                          DeferredStorageDeleter storageDeleter) {
         this.userRepository = userRepository;
         this.storageService = storageService;
+        this.storageDeleter = storageDeleter;
     }
 
     @Transactional(readOnly = true)
@@ -62,14 +67,19 @@ public class ProfileService {
             throw ApiException.invalidUpload();
         }
         User user = loadUser(userId);
+        String oldKey = storageService.keyFromPublicUrl(user.getAvatarUrl());
         user.setAvatarUrl(storageService.publicUrl(key));
+        // A korábbi avatar fájlja árvává válna — töröljük a csere commitja után.
+        storageDeleter.deleteAfterCommit(List.of(oldKey == null ? "" : oldKey));
         return UserDto.from(user);
     }
 
     @Transactional
     public UserDto removeAvatar(UUID userId) {
         User user = loadUser(userId);
+        String oldKey = storageService.keyFromPublicUrl(user.getAvatarUrl());
         user.setAvatarUrl(null);
+        storageDeleter.deleteAfterCommit(List.of(oldKey == null ? "" : oldKey));
         return UserDto.from(user);
     }
 

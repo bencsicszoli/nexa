@@ -1,6 +1,8 @@
 package com.nexa.storage;
 
 import com.nexa.common.ApiException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,11 @@ import java.util.UUID;
 @Service
 @ConditionalOnProperty(name = "nexa.storage.provider", havingValue = "local", matchIfMissing = true)
 public class LocalStorageService implements StorageService {
+
+    private static final Logger log = LoggerFactory.getLogger(LocalStorageService.class);
+
+    /** A publikus kiszolgálási útvonal előtagja (lásd {@link #publicUrl(String)}). */
+    private static final String PUBLIC_PREFIX = "/api/media/";
 
     // Ismert MIME-típusok → fájlkiterjesztés. A profil avatarhoz csak képek
     // jutnak el (a validáció a ProfileService-ben van); a videó a #6 kártyához kell.
@@ -74,7 +81,36 @@ public class LocalStorageService implements StorageService {
 
     @Override
     public String publicUrl(String key) {
-        return "/api/media/" + key;
+        return PUBLIC_PREFIX + key;
+    }
+
+    @Override
+    public String keyFromPublicUrl(String publicUrl) {
+        if (publicUrl == null || !publicUrl.startsWith(PUBLIC_PREFIX)) {
+            return null;
+        }
+        return publicUrl.substring(PUBLIC_PREFIX.length());
+    }
+
+    @Override
+    public void delete(String key) {
+        if (key == null || key.isBlank()) {
+            return;
+        }
+        Path file;
+        try {
+            file = resolveWithinRoot(key);
+        } catch (ApiException e) {
+            // Path-traversal kísérlet (nem várt belső hívásnál) — csak jelezzük.
+            log.warn("Érvénytelen tárolókulcs törléskor, kihagyva: {}", key);
+            return;
+        }
+        try {
+            // Best-effort: ha már nincs ott, nem hiba.
+            Files.deleteIfExists(file);
+        } catch (IOException e) {
+            log.warn("Nem sikerült törölni a tárolt objektumot: {}", key, e);
+        }
     }
 
     /**

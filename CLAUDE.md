@@ -116,6 +116,13 @@ A saját poszt **szerkeszthető** (csak a szöveg: `PATCH /api/posts/{id}`) és 
 (`DELETE /api/posts/{id}`) — idegen poszt → `POST_NOT_FOUND` (404, a létezést sem szivárogtatjuk);
 a `PostCard` „…" menüjéből, a `ProfilePage` `editable` propján át.
 
+**Fájl-élettartam (árva fájlok ellen):** a `StorageService` `delete(key)` + `keyFromPublicUrl(url)`
+párral takarít. A tényleges fájltörlés a DB-**commit után**, best-effort fut
+(`DeferredStorageDeleter` + tranzakció-szinkronizáció), így rollbacknál nem törlünk élő fájlt.
+Poszt törlésekor a csatolt médiafájlok, avatar **cseréjekor/eltávolításakor** a régi kép is törlődik
+— sehol nem marad árva objektum. Az s3 providernek (amikor elkészül) szintén implementálnia kell a
+`delete`/`keyFromPublicUrl` metódusokat.
+
 **Tárolás (`#4`-től):** pluggable `StorageService` presigned-URL mintára. Alapból a **`local`** provider
 fut (`nexa.storage.provider=local`): aláírt PUT a `/api/storage/upload`-ra, a fájl lemezre kerül
 (`nexa.storage.local.dir`, alap `backend/data/media`, gitignore-olt), kiszolgálás a publikus

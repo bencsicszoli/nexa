@@ -103,6 +103,10 @@ class ProfileFlowTest {
         mockMvc.perform(delete("/api/profile/avatar").header("Authorization", auth))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.avatarUrl").doesNotExist());
+
+        // 8) Az eltávolítással a tárolt fájl is törlődik (nem marad árva) → 404.
+        mockMvc.perform(get("/api/media/" + key))
+                .andExpect(status().isNotFound());
     }
 
     @Test

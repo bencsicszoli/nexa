@@ -239,4 +239,40 @@ class PostFlowTest {
         mockMvc.perform(get("/api/posts/me").header("Authorization", auth))
                 .andExpect(jsonPath("$.length()").value(0));
     }
+
+    @Test
+    void deletingPostAlsoDeletesItsMediaFile() throws Exception {
+        String auth = "Bearer " + register("milo@example.com");
+
+        // Média feltöltése.
+        var uploadResult = mockMvc.perform(post("/api/posts/media/upload-url")
+                        .header("Authorization", auth)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"contentType":"image/png"}"""))
+                .andExpect(status().isOk())
+                .andReturn();
+        JsonNode upload = objectMapper.readTree(uploadResult.getResponse().getContentAsString());
+        String uploadUrl = upload.get("uploadUrl").asText();
+        String key = upload.get("key").asText();
+        mockMvc.perform(put(uploadUrl)
+                        .contentType(MediaType.IMAGE_PNG)
+                        .content(new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47}))
+                .andExpect(status().isNoContent());
+
+        // Poszt a médiával; a fájl kiszolgálható.
+        String id = objectMapper.readTree(mockMvc.perform(post("/api/posts").header("Authorization", auth)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"content":"képes poszt","media":[{"key":"%s","type":"IMAGE","sizeBytes":4}]}"""
+                                .formatted(key)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString()).get("id").asText();
+        mockMvc.perform(get("/api/media/" + key)).andExpect(status().isOk());
+
+        // Törlés után a média fájl is eltűnik (commit utáni törlés) → 404.
+        mockMvc.perform(delete("/api/posts/" + id).header("Authorization", auth))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(get("/api/media/" + key)).andExpect(status().isNotFound());
+    }
 }
