@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: nexa-backend
+
+server:
+  port: 8080
+
+# CORS-t a 2. kártyától WebMvcConfigurer-rel finomítjuk; egyelőre a Vite dev szervert engedjük.
+nexa:
+  cors:
+    allowed-origins: "http://localhost:5173"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
