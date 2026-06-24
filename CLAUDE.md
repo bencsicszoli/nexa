@@ -95,5 +95,12 @@ Konvenciók a meglévő vázból (kövesd új kódnál is):
 
 ## Állapot
 
-`#1` (monorepo váz + health check) **kész és lezárva**. A következő `#2` (app shell az „A" elrendezéssel +
-EN/HU i18n). A backlogot, a függőségeket és a részletes elfogadási kritériumokat lásd a Project issue-iban.
+`#1` (váz + health check), `#2` (app shell + i18n) és `#3` (regisztráció/bejelentkezés JWT-vel)
+**kész és lezárva**. A következő `#4` (profil: szerkesztés + avatar R2-be).
+
+**Dev-adatbázis (3. kártyától):** a fejlesztőgépen az 5432-es porton másik Postgres fut, ezért a
+Nexa Postgres Dockerből a **5433** host-porton megy (`docker compose up -d postgres redis`). A backend
+alapból a `localhost:5433/nexa`-ra csatlakozik (`DB_URL/DB_USER/DB_PASSWORD` env-vel felülírható);
+a `docker` profilban `postgres:5432`. A backend-tesztek H2 in-memory DB-vel futnak — nem kell élő Postgres.
+
+A backlogot, a függőségeket és a részletes elfogadási kritériumokat lásd a Project issue-iban.
