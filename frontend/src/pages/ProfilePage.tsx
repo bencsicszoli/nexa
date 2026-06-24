@@ -1,8 +1,10 @@
-import { useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Camera, Loader2, Trash2 } from 'lucide-react'
 import Avatar from '../components/Avatar'
 import AvatarCropper from '../components/AvatarCropper'
+import PostComposer from '../components/PostComposer'
+import PostCard from '../components/PostCard'
 import { useAuth } from '../auth/AuthContext'
 import { errorKey } from '../auth/errorKey'
 import {
@@ -12,6 +14,8 @@ import {
   updateProfile,
   uploadAvatarFile,
 } from '../profile/profileApi'
+import { getMyPosts } from '../posts/postApi'
+import type { Post } from '../posts/types'
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 const MAX_BYTES = 5 * 1024 * 1024
@@ -30,6 +34,28 @@ export default function ProfilePage() {
   const [pendingFile, setPendingFile] = useState<File | null>(null)
   // Visszajelzés: vagy egy siker-, vagy egy hibaüzenet-kulcs.
   const [feedback, setFeedback] = useState<{ kind: 'ok' | 'error'; key: string } | null>(null)
+
+  // A saját bejegyzések (legfrissebb felül) — itt jelenik meg az új poszt azonnal.
+  const [posts, setPosts] = useState<Post[]>([])
+  const [postsLoading, setPostsLoading] = useState(true)
+  const [postsError, setPostsError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let active = true
+    getMyPosts()
+      .then((loaded) => {
+        if (active) setPosts(loaded)
+      })
+      .catch((err) => {
+        if (active) setPostsError(errorKey(err))
+      })
+      .finally(() => {
+        if (active) setPostsLoading(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [])
 
   if (!user) return null
 
@@ -207,6 +233,28 @@ export default function ProfilePage() {
           )}
         </div>
       </form>
+
+      {/* Saját bejegyzések — itt írható és azonnal itt jelenik meg az új poszt (#5) */}
+      <section className="flex flex-col gap-4">
+        <h2 className="px-1 text-sm font-semibold text-slate-700">{t('posts.myPosts')}</h2>
+        <PostComposer onCreated={(post) => setPosts((prev) => [post, ...prev])} />
+
+        {postsLoading ? (
+          <div className="flex justify-center py-8 text-slate-400">
+            <Loader2 className="h-5 w-5 animate-spin" />
+          </div>
+        ) : postsError ? (
+          <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600" role="alert">
+            {t(postsError)}
+          </p>
+        ) : posts.length === 0 ? (
+          <p className="rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-8 text-center text-sm text-slate-500">
+            {t('posts.empty')}
+          </p>
+        ) : (
+          posts.map((post) => <PostCard key={post.id} post={post} />)
+        )}
+      </section>
 
       {pendingFile && (
         <AvatarCropper

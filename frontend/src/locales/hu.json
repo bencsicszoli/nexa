@@ -22,7 +22,15 @@
     "placeholder": "Mi jár a fejedben?",
     "photo": "Fotó",
     "video": "Videó",
-    "text": "Szöveg"
+    "text": "Szöveg",
+    "post": "Közzététel",
+    "posting": "Közzététel…",
+    "postedFeed": "A bejegyzésed közzétettük.",
+    "viewOnProfile": "Megtekintés a profilodon"
+  },
+  "posts": {
+    "myPosts": "Bejegyzéseim",
+    "empty": "Még nem írtál semmit. Oszd meg az első bejegyzésed fent."
   },
   "feed": {
     "emptyTitle": "Még üres a hírfolyamod",

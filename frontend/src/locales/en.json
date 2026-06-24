@@ -22,7 +22,15 @@
     "placeholder": "What's on your mind?",
     "photo": "Photo",
     "video": "Video",
-    "text": "Text"
+    "text": "Text",
+    "post": "Post",
+    "posting": "Posting…",
+    "postedFeed": "Your post is live.",
+    "viewOnProfile": "View it on your profile"
+  },
+  "posts": {
+    "myPosts": "My posts",
+    "empty": "You haven't posted anything yet. Share your first post above."
   },
   "feed": {
     "emptyTitle": "Your feed is empty",
