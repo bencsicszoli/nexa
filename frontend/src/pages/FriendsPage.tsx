@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Check, Loader2, Search, UserMinus, UserPlus, X } from 'lucide-react'
+import { Check, Loader2, Rss, Search, UserMinus, UserPlus, X } from 'lucide-react'
 import Avatar from '../components/Avatar'
 import { errorKey } from '../auth/errorKey'
 import { useFriendNotifications } from '../friends/FriendNotificationsContext'
@@ -14,6 +14,7 @@ import {
   sendFriendRequest,
 } from '../friends/friendsApi'
 import type { Friend, FriendRequests, PersonSummary } from '../friends/types'
+import { followUser, getFollowing, unfollowUser } from '../follow/followApi'
 
 type Tab = 'friends' | 'requests' | 'people'
 
@@ -26,18 +27,24 @@ export default function FriendsPage() {
   const [requests, setRequests] = useState<FriendRequests>({ incoming: [], outgoing: [] })
   const [people, setPeople] = useState<PersonSummary[]>([])
   const [query, setQuery] = useState('')
+  // Akiket a felhasználó követ — az „Emberek" böngészés követés-gombjának állapotához
+  // (a követés egyirányú, független az ismerősségtől; lásd /following oldal).
+  const [followingIds, setFollowingIds] = useState<Set<string>>(new Set())
 
   const [loading, setLoading] = useState(true)
   const [peopleLoading, setPeopleLoading] = useState(false)
-  // Melyik elemen fut épp egy művelet (gomb pörög, tiltva).
+  // Melyik elemen fut épp egy ismerős-művelet (gomb pörög, tiltva).
   const [busyId, setBusyId] = useState<string | null>(null)
+  // Külön a követés-gombhoz, mert ugyanazon a soron él, mint az ismerős-művelet.
+  const [followBusyId, setFollowBusyId] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<{ kind: 'ok' | 'error'; key: string } | null>(null)
 
-  // Ismerősök + kérések betöltése (a fülek számlálóihoz mindkettő kell).
+  // Ismerősök + kérések + követések betöltése (a fülek számlálóihoz / követés-gombhoz kell).
   const loadCore = useCallback(async () => {
-    const [f, r] = await Promise.all([getFriends(), getRequests()])
+    const [f, r, fl] = await Promise.all([getFriends(), getRequests(), getFollowing()])
     setFriends(f)
     setRequests(r)
+    setFollowingIds(new Set(fl.map((u) => u.id)))
     // Az oldal megnyitásával a beérkezett kéréseket „látottá" tesszük → eltűnik a navi badge.
     markSeen(r.incoming.map((req) => req.requestId))
   }, [markSeen])
@@ -84,6 +91,32 @@ export default function FriendsPage() {
       setFeedback({ kind: 'error', key: errorKey(err) })
     } finally {
       setBusyId(null)
+    }
+  }
+
+  // Követés be-/kikapcsolása az „Emberek" böngészésben (független az ismerős-művelettől).
+  async function toggleFollow(person: PersonSummary) {
+    const isFollowing = followingIds.has(person.id)
+    setFollowBusyId(person.id)
+    setFeedback(null)
+    try {
+      if (isFollowing) {
+        await unfollowUser(person.id)
+        setFollowingIds((prev) => {
+          const next = new Set(prev)
+          next.delete(person.id)
+          return next
+        })
+        setFeedback({ kind: 'ok', key: 'follow.unfollowed' })
+      } else {
+        await followUser(person.id)
+        setFollowingIds((prev) => new Set(prev).add(person.id))
+        setFeedback({ kind: 'ok', key: 'follow.followed' })
+      }
+    } catch (err) {
+      setFeedback({ kind: 'error', key: errorKey(err) })
+    } finally {
+      setFollowBusyId(null)
     }
   }
 
@@ -168,6 +201,9 @@ export default function FriendsPage() {
           query={query}
           loading={peopleLoading}
           busyId={busyId}
+          followingIds={followingIds}
+          followBusyId={followBusyId}
+          onToggleFollow={toggleFollow}
           onQueryChange={setQuery}
           onSend={(p) => run(p.id, () => sendFriendRequest(p.id), 'friends.requestSent')}
           onAccept={(p) =>
@@ -357,6 +393,9 @@ function PeopleList({
   query,
   loading,
   busyId,
+  followingIds,
+  followBusyId,
+  onToggleFollow,
   onQueryChange,
   onSend,
   onAccept,
@@ -367,6 +406,9 @@ function PeopleList({
   query: string
   loading: boolean
   busyId: string | null
+  followingIds: Set<string>
+  followBusyId: string | null
+  onToggleFollow: (p: PersonSummary) => void
   onQueryChange: (q: string) => void
   onSend: (p: PersonSummary) => void
   onAccept: (p: PersonSummary) => void
@@ -398,8 +440,23 @@ function PeopleList({
           {people.map((p) => {
             const busy = busyId === p.id
             const spin = <Loader2 className="h-4 w-4 animate-spin" />
+            const isFollowing = followingIds.has(p.id)
+            const followBusy = followBusyId === p.id
             return (
               <PersonItem key={p.id} name={p.displayName} avatarUrl={p.avatarUrl} bio={p.bio}>
+                <button
+                  type="button"
+                  disabled={followBusy}
+                  onClick={() => onToggleFollow(p)}
+                  className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-60 ${
+                    isFollowing
+                      ? 'border border-slate-200 text-slate-600 hover:bg-slate-100'
+                      : 'border border-brand/30 text-brand hover:bg-brand/10'
+                  }`}
+                >
+                  {followBusy ? spin : <Rss className="h-4 w-4" />}
+                  {isFollowing ? t('follow.following') : t('follow.follow')}
+                </button>
                 {p.relationship === 'NONE' && (
                   <button
                     type="button"

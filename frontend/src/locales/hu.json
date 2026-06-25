@@ -12,6 +12,7 @@
   "nav": {
     "feed": "Hírfolyam",
     "friends": "Ismerősök",
+    "following": "Követés",
     "groups": "Csoportok",
     "profile": "Profilom",
     "media": "Médiatár",
@@ -78,6 +79,22 @@
     "declined": "Kérés elutasítva.",
     "cancelled": "Kérés visszavonva.",
     "removed": "Ismerős eltávolítva."
+  },
+  "follow": {
+    "title": "Követés",
+    "subtitle": "Tartalomgyártók és közéleti szereplők követése — egyirányú.",
+    "tab": {
+      "following": "Követett",
+      "followers": "Követők"
+    },
+    "follow": "Követés",
+    "following": "Követed",
+    "unfollow": "Követés ki",
+    "followingEmpty": "Még senkit sem követsz. Keress embereket az „Ismerősök → Emberek\" fülön.",
+    "followersEmpty": "Még senki sem követ téged.",
+    "since": "Követed {{date}} óta",
+    "followed": "Követés bekapcsolva.",
+    "unfollowed": "Követés kikapcsolva."
   },
   "feed": {
     "emptyTitle": "Még üres a hírfolyamod",
@@ -170,6 +187,7 @@
       "REVERSE_FRIEND_REQUEST_EXISTS": "Ez a felhasználó már küldött neked kérést — fogadd el a Kérések fülön.",
       "FRIEND_REQUEST_NOT_FOUND": "A kérés nem található.",
       "NOT_FRIENDS": "Nem vagytok ismerősök.",
+      "CANNOT_FOLLOW_SELF": "Saját magadat nem követheted.",
       "NETWORK": "Nem sikerült elérni a szervert. Próbáld újra.",
       "UNKNOWN_ERROR": "Hiba történt. Próbáld újra."
     }

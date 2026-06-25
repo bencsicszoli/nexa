@@ -111,4 +111,12 @@ public class ApiException extends RuntimeException {
         return new ApiException(HttpStatus.NOT_FOUND, "NOT_FRIENDS",
                 "You are not friends with this user.");
     }
+
+    // --- Követés (#8) ---
+
+    /** Saját magát senki nem követheti. */
+    public static ApiException cannotFollowSelf() {
+        return new ApiException(HttpStatus.BAD_REQUEST, "CANNOT_FOLLOW_SELF",
+                "You cannot follow yourself.");
+    }
 }

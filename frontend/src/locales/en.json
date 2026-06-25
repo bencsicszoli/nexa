@@ -12,6 +12,7 @@
   "nav": {
     "feed": "Feed",
     "friends": "Friends",
+    "following": "Following",
     "groups": "Groups",
     "profile": "My profile",
     "media": "Media library",
@@ -78,6 +79,22 @@
     "declined": "Request declined.",
     "cancelled": "Request cancelled.",
     "removed": "Friend removed."
+  },
+  "follow": {
+    "title": "Following",
+    "subtitle": "Follow creators and public figures — one-directional.",
+    "tab": {
+      "following": "Following",
+      "followers": "Followers"
+    },
+    "follow": "Follow",
+    "following": "Following",
+    "unfollow": "Unfollow",
+    "followingEmpty": "You're not following anyone yet. Find people on the \"Friends → People\" tab.",
+    "followersEmpty": "No one is following you yet.",
+    "since": "Following since {{date}}",
+    "followed": "Now following.",
+    "unfollowed": "Unfollowed."
   },
   "feed": {
     "emptyTitle": "Your feed is empty",
@@ -164,6 +181,7 @@
       "INVALID_UPLOAD": "The upload could not be completed. Please try again.",
       "USER_NOT_FOUND": "User not found.",
       "POST_NOT_FOUND": "Post not found.",
+      "CANNOT_FOLLOW_SELF": "You cannot follow yourself.",
       "NETWORK": "Could not reach the server. Please try again.",
       "UNKNOWN_ERROR": "Something went wrong. Please try again."
     }

@@ -7,6 +7,7 @@ import {
   Rss,
   Settings,
   User,
+  UserRoundPlus,
   Users,
 } from 'lucide-react'
 import { useFriendNotifications } from '../../friends/FriendNotificationsContext'
@@ -20,6 +21,7 @@ type NavItem = {
 const PRIMARY: NavItem[] = [
   { to: '/', labelKey: 'nav.feed', icon: Rss },
   { to: '/friends', labelKey: 'nav.friends', icon: Users },
+  { to: '/following', labelKey: 'nav.following', icon: UserRoundPlus },
   { to: '/groups', labelKey: 'nav.groups', icon: FolderKanban },
   { to: '/profile', labelKey: 'nav.profile', icon: User },
   { to: '/media', labelKey: 'nav.media', icon: ImageIcon },
