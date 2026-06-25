@@ -16,7 +16,8 @@
     "profile": "Profilom",
     "media": "Médiatár",
     "settings": "Beállítások",
-    "myGroups": "Csoportjaim"
+    "myGroups": "Csoportjaim",
+    "newFriendRequests": "{{count}} új ismerőskérés"
   },
   "composer": {
     "placeholder": "Mi jár a fejedben?",
@@ -47,6 +48,37 @@
     "deleting": "Törlés…",
     "deleteConfirm": "Biztosan törlöd ezt a bejegyzést?"
   },
+  "friends": {
+    "title": "Ismerősök",
+    "subtitle": "Kezeld az ismerőseidet és a függőben lévő kéréseket.",
+    "tab": {
+      "friends": "Ismerősök",
+      "requests": "Kérések",
+      "people": "Emberek"
+    },
+    "friendsEmpty": "Még nincsenek ismerőseid. Keress embereket az „Emberek\" fülön.",
+    "requestsEmpty": "Nincs függőben lévő kérésed.",
+    "incoming": "Beérkezett kérések",
+    "incomingEmpty": "Nincs beérkezett kérésed.",
+    "outgoing": "Elküldött kérések",
+    "pending": "Függőben",
+    "peopleSearchPlaceholder": "Emberek keresése név vagy e-mail alapján…",
+    "peopleEmpty": "Nincs találat.",
+    "add": "Ismerősnek jelölés",
+    "sent": "Kérés elküldve",
+    "requested": "Kérés visszavonása",
+    "accept": "Elfogadás",
+    "decline": "Elutasítás",
+    "cancel": "Visszavonás",
+    "remove": "Eltávolítás",
+    "friendsLabel": "Ismerős",
+    "since": "Ismerős {{date}} óta",
+    "requestSent": "Ismerőskérés elküldve.",
+    "accepted": "Kérés elfogadva.",
+    "declined": "Kérés elutasítva.",
+    "cancelled": "Kérés visszavonva.",
+    "removed": "Ismerős eltávolítva."
+  },
   "feed": {
     "emptyTitle": "Még üres a hírfolyamod",
     "emptySubtitle": "Itt jelennek meg majd időrendben az ismerőseid, a követett alkotók és a csoportjaid bejegyzései — legfrissebb felül."
@@ -55,6 +87,8 @@
     "newPostToast": "{{name}} új bejegyzést töltött fel",
     "newPostHint": "Kattints a hírfolyam frissítéséhez",
     "friends": "Ismerősök",
+    "noFriends": "Még nincsenek ismerőseid.",
+    "seeAllFriends": "Mind a(z) {{count}} megtekintése",
     "followedCreators": "Követett alkotók",
     "premiumTitle": "Nexa Premium",
     "premiumDesc": "Reklámmentes élmény.",
@@ -130,6 +164,12 @@
       "INVALID_UPLOAD": "A feltöltés nem sikerült. Próbáld újra.",
       "USER_NOT_FOUND": "A felhasználó nem található.",
       "POST_NOT_FOUND": "A bejegyzés nem található.",
+      "SELF_FRIEND_REQUEST": "Saját magadnak nem küldhetsz ismerőskérést.",
+      "ALREADY_FRIENDS": "Már ismerősök vagytok.",
+      "FRIEND_REQUEST_ALREADY_SENT": "Már küldtél kérést ennek a felhasználónak.",
+      "REVERSE_FRIEND_REQUEST_EXISTS": "Ez a felhasználó már küldött neked kérést — fogadd el a Kérések fülön.",
+      "FRIEND_REQUEST_NOT_FOUND": "A kérés nem található.",
+      "NOT_FRIENDS": "Nem vagytok ismerősök.",
       "NETWORK": "Nem sikerült elérni a szervert. Próbáld újra.",
       "UNKNOWN_ERROR": "Hiba történt. Próbáld újra."
     }

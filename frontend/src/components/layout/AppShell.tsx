@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import TopBar from './TopBar'
 import LeftNav from './LeftNav'
 import RightSidebar from './RightSidebar'
+import { FriendNotificationsProvider } from '../../friends/FriendNotificationsContext'
 
 // Az "A" (3 oszlopos) elrendezés: bal navigáció · középső tartalom · jobb sáv.
 // Reszponzív viselkedés:
@@ -15,6 +16,7 @@ export default function AppShell() {
   const [menuOpen, setMenuOpen] = useState(false)
 
   return (
+    <FriendNotificationsProvider>
     <div className="min-h-screen bg-slate-100 text-slate-900">
       <TopBar onOpenMenu={() => setMenuOpen(true)} />
 
@@ -64,5 +66,6 @@ export default function AppShell() {
         </div>
       )}
     </div>
+    </FriendNotificationsProvider>
   )
 }

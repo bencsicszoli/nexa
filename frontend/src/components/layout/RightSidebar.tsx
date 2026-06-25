@@ -1,10 +1,16 @@
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { NavLink } from 'react-router-dom'
 import { Sparkles, X } from 'lucide-react'
 import Avatar from '../Avatar'
+import { getFriends } from '../../friends/friendsApi'
+import type { Friend } from '../../friends/types'
 
-// Placeholder adat — a valódi tartalmat a kapcsolati/értesítési kártyák töltik fel
-// (#7 ismerősök, #8 követés, #11 értesítés, #14 előfizetés).
-const FRIENDS = ['Anna Kovács', 'Béla Nagy', 'Csaba Tóth', 'Dóra Szabó']
+// A jobb oldali sávban legfeljebb ennyi ismerőst mutatunk (a teljes lista a /friends oldalon).
+const FRIENDS_PREVIEW = 6
+
+// Placeholder adat — a valódi tartalmat a hátralévő kártyák töltik fel (#8 követés,
+// #11 értesítés, #14 előfizetés).
 const CREATORS = [
   { name: 'Tech Híradó', meta: 'napi 3 poszt' },
   { name: 'Könyvklub', meta: 'heti összefoglaló' },
@@ -22,6 +28,21 @@ function ListCard({ title, children }: { title: string; children: React.ReactNod
 export default function RightSidebar() {
   const { t } = useTranslation()
 
+  const [friends, setFriends] = useState<Friend[]>([])
+
+  useEffect(() => {
+    let active = true
+    // Best-effort: a jobb sáv csak előnézet, hibát itt nem jelzünk (a /friends oldal igen).
+    getFriends()
+      .then((list) => {
+        if (active) setFriends(list)
+      })
+      .catch(() => {})
+    return () => {
+      active = false
+    }
+  }, [])
+
   return (
     <div className="flex flex-col gap-4">
       {/* Valós idejű értesítés-előnézet (statikus váz; élővé a #11 kártya teszi) */}
@@ -35,12 +56,23 @@ export default function RightSidebar() {
       </div>
 
       <ListCard title={t('right.friends')}>
-        {FRIENDS.map((name) => (
-          <div key={name} className="flex items-center gap-3">
-            <Avatar name={name} size="sm" />
-            <span className="truncate text-sm text-slate-700">{name}</span>
-          </div>
-        ))}
+        {friends.length === 0 ? (
+          <p className="text-xs text-slate-400">{t('right.noFriends')}</p>
+        ) : (
+          <>
+            {friends.slice(0, FRIENDS_PREVIEW).map((f) => (
+              <div key={f.id} className="flex items-center gap-3">
+                <Avatar name={f.displayName} src={f.avatarUrl} size="sm" />
+                <span className="truncate text-sm text-slate-700">{f.displayName}</span>
+              </div>
+            ))}
+            {friends.length > FRIENDS_PREVIEW && (
+              <NavLink to="/friends" className="text-xs font-medium text-brand hover:underline">
+                {t('right.seeAllFriends', { count: friends.length })}
+              </NavLink>
+            )}
+          </>
+        )}
       </ListCard>
 
       <ListCard title={t('right.followedCreators')}>

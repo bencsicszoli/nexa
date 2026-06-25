@@ -3,6 +3,7 @@ import AppShell from './components/layout/AppShell'
 import ProtectedRoute from './auth/ProtectedRoute'
 import FeedPage from './pages/FeedPage'
 import ProfilePage from './pages/ProfilePage'
+import FriendsPage from './pages/FriendsPage'
 import PlaceholderPage from './pages/PlaceholderPage'
 import LoginPage from './pages/auth/LoginPage'
 import RegisterPage from './pages/auth/RegisterPage'
@@ -18,7 +19,7 @@ export default function App() {
       <Route element={<ProtectedRoute />}>
         <Route element={<AppShell />}>
           <Route index element={<FeedPage />} />
-          <Route path="friends" element={<PlaceholderPage titleKey="nav.friends" />} />
+          <Route path="friends" element={<FriendsPage />} />
           <Route path="groups" element={<PlaceholderPage titleKey="nav.groups" />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="media" element={<PlaceholderPage titleKey="nav.media" />} />

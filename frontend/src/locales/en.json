@@ -16,7 +16,8 @@
     "profile": "My profile",
     "media": "Media library",
     "settings": "Settings",
-    "myGroups": "My groups"
+    "myGroups": "My groups",
+    "newFriendRequests": "{{count}} new friend requests"
   },
   "composer": {
     "placeholder": "What's on your mind?",
@@ -47,6 +48,37 @@
     "deleting": "Deleting…",
     "deleteConfirm": "Delete this post?"
   },
+  "friends": {
+    "title": "Friends",
+    "subtitle": "Manage your friends and pending requests.",
+    "tab": {
+      "friends": "Friends",
+      "requests": "Requests",
+      "people": "People"
+    },
+    "friendsEmpty": "You don't have any friends yet. Find people on the \"People\" tab.",
+    "requestsEmpty": "You have no pending requests.",
+    "incoming": "Incoming requests",
+    "incomingEmpty": "No incoming requests.",
+    "outgoing": "Sent requests",
+    "pending": "Pending",
+    "peopleSearchPlaceholder": "Search people by name or email…",
+    "peopleEmpty": "No results.",
+    "add": "Add friend",
+    "sent": "Request sent",
+    "requested": "Cancel request",
+    "accept": "Accept",
+    "decline": "Decline",
+    "cancel": "Cancel",
+    "remove": "Remove",
+    "friendsLabel": "Friends",
+    "since": "Friends since {{date}}",
+    "requestSent": "Friend request sent.",
+    "accepted": "Request accepted.",
+    "declined": "Request declined.",
+    "cancelled": "Request cancelled.",
+    "removed": "Friend removed."
+  },
   "feed": {
     "emptyTitle": "Your feed is empty",
     "emptySubtitle": "Posts from your friends, followed creators and groups will appear here in chronological order — newest first."
@@ -55,6 +87,8 @@
     "newPostToast": "{{name}} shared a new post",
     "newPostHint": "Click to refresh your feed",
     "friends": "Friends",
+    "noFriends": "You don't have any friends yet.",
+    "seeAllFriends": "See all {{count}}",
     "followedCreators": "Followed creators",
     "premiumTitle": "Nexa Premium",
     "premiumDesc": "An ad-free experience.",

@@ -9,6 +9,7 @@ import {
   User,
   Users,
 } from 'lucide-react'
+import { useFriendNotifications } from '../../friends/FriendNotificationsContext'
 
 type NavItem = {
   to: string
@@ -35,6 +36,7 @@ type LeftNavProps = {
 
 export default function LeftNav({ onNavigate }: LeftNavProps) {
   const { t } = useTranslation()
+  const { unseenCount } = useFriendNotifications()
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
@@ -45,12 +47,24 @@ export default function LeftNav({ onNavigate }: LeftNavProps) {
 
   return (
     <nav className="flex flex-col gap-1" aria-label={t('nav.feed')}>
-      {PRIMARY.map(({ to, labelKey, icon: Icon }) => (
-        <NavLink key={to} to={to} end={to === '/'} className={linkClass} onClick={onNavigate}>
-          <Icon className="h-5 w-5 shrink-0" />
-          <span>{t(labelKey)}</span>
-        </NavLink>
-      ))}
+      {PRIMARY.map(({ to, labelKey, icon: Icon }) => {
+        // Az „Ismerősök" mellett a megtekintetlen kérések száma (badge); 0-nál nincs jelzés.
+        const badge = to === '/friends' ? unseenCount : 0
+        return (
+          <NavLink key={to} to={to} end={to === '/'} className={linkClass} onClick={onNavigate}>
+            <Icon className="h-5 w-5 shrink-0" />
+            <span>{t(labelKey)}</span>
+            {badge > 0 && (
+              <span
+                className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[11px] font-bold text-white"
+                aria-label={t('nav.newFriendRequests', { count: badge })}
+              >
+                {badge}
+              </span>
+            )}
+          </NavLink>
+        )
+      })}
 
       <div className="mt-5 px-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
         {t('nav.myGroups')}

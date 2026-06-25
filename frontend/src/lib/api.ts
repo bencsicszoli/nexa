@@ -110,6 +110,8 @@ export async function apiFetch<T>(path: string, opts: ApiOptions = {}): Promise<
     throw new ApiError(res.status, body)
   }
 
+  // Üres törzsű siker (204, vagy pl. 201 Created body nélkül) → nincs mit parse-olni.
   if (res.status === 204) return undefined as T
-  return (await res.json()) as T
+  const text = await res.text()
+  return (text ? JSON.parse(text) : undefined) as T
 }

@@ -73,4 +73,42 @@ public class ApiException extends RuntimeException {
         return new ApiException(HttpStatus.BAD_REQUEST, "INVALID_UPLOAD",
                 "The upload link is invalid or has expired.");
     }
+
+    // --- Ismerősök (#7) ---
+
+    /** Saját magának nem küldhet ismerőskérést. */
+    public static ApiException selfFriendRequest() {
+        return new ApiException(HttpStatus.BAD_REQUEST, "SELF_FRIEND_REQUEST",
+                "You cannot send a friend request to yourself.");
+    }
+
+    /** Már ismerősök — nincs mit kezdeményezni. */
+    public static ApiException alreadyFriends() {
+        return new ApiException(HttpStatus.CONFLICT, "ALREADY_FRIENDS",
+                "You are already friends with this user.");
+    }
+
+    /** A bejelentkezett felhasználó már küldött (függőben lévő) kérést ennek a felhasználónak. */
+    public static ApiException friendRequestAlreadySent() {
+        return new ApiException(HttpStatus.CONFLICT, "FRIEND_REQUEST_ALREADY_SENT",
+                "You have already sent a friend request to this user.");
+    }
+
+    /** A másik fél már küldött kérést — azt kell elfogadni, nem újat küldeni. */
+    public static ApiException reverseFriendRequestExists() {
+        return new ApiException(HttpStatus.CONFLICT, "REVERSE_FRIEND_REQUEST_EXISTS",
+                "This user has already sent you a friend request. Accept it instead.");
+    }
+
+    /** Nem létező, vagy nem a hívóhoz tartozó kérés (a létezést sem szivárogtatjuk). */
+    public static ApiException friendRequestNotFound() {
+        return new ApiException(HttpStatus.NOT_FOUND, "FRIEND_REQUEST_NOT_FOUND",
+                "Friend request not found.");
+    }
+
+    /** A két felhasználó nem ismerős (pl. eltávolításkor). */
+    public static ApiException notFriends() {
+        return new ApiException(HttpStatus.NOT_FOUND, "NOT_FRIENDS",
+                "You are not friends with this user.");
+    }
 }
