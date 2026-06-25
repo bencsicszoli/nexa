@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { Check, FolderKanban, Loader2, LogOut, Plus, Search, Users } from 'lucide-react'
+import { Check, Clock, FolderKanban, Globe, Loader2, Lock, LogOut, Plus, Search, Users } from 'lucide-react'
 import { errorKey } from '../auth/errorKey'
 import {
   browseGroups,
@@ -10,7 +10,7 @@ import {
   joinGroup,
   leaveGroup,
 } from '../groups/groupsApi'
-import type { Group } from '../groups/types'
+import type { Group, GroupVisibility } from '../groups/types'
 
 type Tab = 'mine' | 'discover'
 
@@ -34,6 +34,7 @@ export default function GroupsPage() {
   const [creating, setCreating] = useState(false)
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
+  const [visibility, setVisibility] = useState<GroupVisibility>('PUBLIC')
   const [submitting, setSubmitting] = useState(false)
 
   const loadMine = useCallback(async () => {
@@ -76,9 +77,10 @@ export default function GroupsPage() {
     setSubmitting(true)
     setFeedback(null)
     try {
-      await createGroup(trimmed, description.trim())
+      await createGroup(trimmed, description.trim(), visibility)
       setName('')
       setDescription('')
+      setVisibility('PUBLIC')
       setCreating(false)
       await loadMine()
       setTab('mine')
@@ -90,15 +92,26 @@ export default function GroupsPage() {
     }
   }
 
-  // Csatlakozás / kilépés a böngészésből; mindkét listát szinkronban tartjuk.
+  // Csatlakozás / kilépés / kérelem-visszavonás a böngészésből; mindkét listát szinkronban tartjuk.
   async function onToggleMembership(group: Group) {
     setBusyId(group.id)
     setFeedback(null)
+    // Tag vagy függő kérelem → kilépés/visszavonás; egyébként csatlakozás/kérelem.
+    const leaving = group.role != null || group.requested
     try {
-      const updated = group.role ? await leaveGroup(group.id) : await joinGroup(group.id)
+      const updated = leaving ? await leaveGroup(group.id) : await joinGroup(group.id)
       setDiscover((prev) => prev.map((g) => (g.id === group.id ? updated : g)))
       await loadMine()
-      setFeedback({ kind: 'ok', key: group.role ? 'groups.left' : 'groups.joined' })
+      setFeedback({
+        kind: 'ok',
+        key: leaving
+          ? group.requested
+            ? 'groups.requestCancelled'
+            : 'groups.left'
+          : updated.requested
+            ? 'groups.requestSent'
+            : 'groups.joined',
+      })
     } catch (err) {
       setFeedback({ kind: 'error', key: errorKey(err) })
     } finally {
@@ -154,6 +167,35 @@ export default function GroupsPage() {
                 className="resize-none rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition-colors focus:border-brand"
               />
             </label>
+            <fieldset className="flex flex-col gap-2">
+              <span className="text-sm font-medium text-slate-700">{t('groups.visibilityLabel')}</span>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {(['PUBLIC', 'PRIVATE'] as const).map((v) => {
+                  const active = visibility === v
+                  const Icon = v === 'PUBLIC' ? Globe : Lock
+                  return (
+                    <button
+                      key={v}
+                      type="button"
+                      onClick={() => setVisibility(v)}
+                      className={`flex items-start gap-2 rounded-lg border px-3 py-2 text-left transition-colors ${
+                        active ? 'border-brand bg-brand/5 ring-1 ring-brand' : 'border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${active ? 'text-brand' : 'text-slate-500'}`} />
+                      <span className="flex flex-col">
+                        <span className="text-sm font-medium text-slate-800">
+                          {t(v === 'PUBLIC' ? 'groups.public' : 'groups.private')}
+                        </span>
+                        <span className="text-xs text-slate-500">
+                          {t(v === 'PUBLIC' ? 'groups.publicHint' : 'groups.privateHint')}
+                        </span>
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </fieldset>
             <div className="flex items-center justify-end gap-2">
               <button
                 type="button"
@@ -274,6 +316,18 @@ function GroupRow({
   const { t } = useTranslation()
   const busy = busyId === group.id
   const isMember = group.role != null
+  const VisIcon = group.visibility === 'PRIVATE' ? Lock : Globe
+
+  // Gombállapot: tag → kilépés; függő kérelem → visszavonás; egyébként csatlakozás
+  // (publikus) / kérelem (privát).
+  const variant = isMember
+    ? { label: t('groups.leave'), icon: LogOut, outline: true }
+    : group.requested
+      ? { label: t('groups.requested'), icon: Clock, outline: true }
+      : group.visibility === 'PRIVATE'
+        ? { label: t('groups.requestJoin'), icon: Lock, outline: false }
+        : { label: t('groups.join'), icon: Check, outline: false }
+  const ActionIcon = variant.icon
 
   return (
     <li className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
@@ -289,6 +343,9 @@ function GroupRow({
             {group.name}
           </p>
           <p className="flex items-center gap-1 truncate text-xs text-slate-500">
+            <VisIcon className="h-3.5 w-3.5" />
+            {t(group.visibility === 'PRIVATE' ? 'groups.private' : 'groups.public')}
+            <span aria-hidden="true">·</span>
             <Users className="h-3.5 w-3.5" />
             {t('groups.memberCount', { count: group.memberCount })}
             {group.role === 'ADMIN' && (
@@ -304,19 +361,13 @@ function GroupRow({
         disabled={busy}
         onClick={() => onToggle(group)}
         className={`inline-flex shrink-0 items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-60 ${
-          isMember
+          variant.outline
             ? 'border border-slate-200 text-slate-600 hover:bg-slate-100'
             : 'bg-brand text-white hover:bg-brand-dark'
         }`}
       >
-        {busy ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : isMember ? (
-          <LogOut className="h-4 w-4" />
-        ) : (
-          <Check className="h-4 w-4" />
-        )}
-        {isMember ? t('groups.leave') : t('groups.join')}
+        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ActionIcon className="h-4 w-4" />}
+        {variant.label}
       </button>
     </li>
   )

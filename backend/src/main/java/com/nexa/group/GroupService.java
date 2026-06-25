@@ -3,7 +3,10 @@ package com.nexa.group;
 import com.nexa.common.ApiException;
 import com.nexa.group.dto.CreateGroupRequest;
 import com.nexa.group.dto.GroupDto;
+import com.nexa.group.dto.GroupJoinRequestDto;
 import com.nexa.group.dto.GroupMemberDto;
+import com.nexa.post.Post;
+import com.nexa.post.PostRepository;
 import com.nexa.post.PostService;
 import com.nexa.post.dto.CreatePostRequest;
 import com.nexa.post.dto.PostDto;
@@ -14,15 +17,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
- * Csoportok üzleti logikája (#9): létrehozás (a létrehozó automatikusan admin), böngészés,
- * a saját csoportok, csatlakozás/kilépés, a csoport tagjai és posztjai, valamint a csoportba
- * írás. A bejegyzés-létrehozást a {@link PostService}-re delegáljuk (közös média-/validációs
- * logika); a tagság-ellenőrzés itt történik.
+ * Csoportok üzleti logikája (#9 + kiegészítések): létrehozás (létrehozó=admin, publikus/privát),
+ * böngészés, saját csoportok, csatlakozás (publikusnál azonnal, privátnál kérelem), kilépés,
+ * tagok, csatlakozási kérelmek kezelése (jóváhagyás/elutasítás), admin-moderáció (tag kizárása,
+ * bejegyzés törlése), valamint a csoport posztjainak listája/írása. A bejegyzés-létrehozást/-törlést
+ * a {@link PostService}-re delegáljuk (közös média-/validációs logika); a jogosultság itt dől el.
  */
 @Service
 public class GroupService {
@@ -32,14 +38,19 @@ public class GroupService {
 
     private final GroupRepository groupRepository;
     private final GroupMemberRepository memberRepository;
+    private final GroupJoinRequestRepository joinRequestRepository;
     private final UserRepository userRepository;
+    private final PostRepository postRepository;
     private final PostService postService;
 
     public GroupService(GroupRepository groupRepository, GroupMemberRepository memberRepository,
-                        UserRepository userRepository, PostService postService) {
+                        GroupJoinRequestRepository joinRequestRepository, UserRepository userRepository,
+                        PostRepository postRepository, PostService postService) {
         this.groupRepository = groupRepository;
         this.memberRepository = memberRepository;
+        this.joinRequestRepository = joinRequestRepository;
         this.userRepository = userRepository;
+        this.postRepository = postRepository;
         this.postService = postService;
     }
 
@@ -47,15 +58,16 @@ public class GroupService {
     @Transactional
     public GroupDto create(UUID userId, CreateGroupRequest request) {
         User creator = userRepository.findById(userId).orElseThrow(ApiException::userNotFound);
-        Group group = groupRepository.save(
-                new Group(request.name().trim(), trimToNull(request.description()), creator));
+        Group group = groupRepository.save(new Group(
+                request.name().trim(), trimToNull(request.description()),
+                request.visibilityOrDefault(), creator));
         memberRepository.save(new GroupMember(group, creator, GroupRole.ADMIN));
-        return GroupDto.of(group, GroupRole.ADMIN, 1);
+        return GroupDto.of(group, GroupRole.ADMIN, 1, false, 0);
     }
 
     /**
-     * Csoportok böngészése a hívó tagsági szerepével együtt (hogy a UI „Csatlakozás"-t vagy
-     * „Belépve"-t mutathasson). Üres szűrőre az első {@value #BROWSE_LIMIT} csoport, név szerint.
+     * Csoportok böngészése a hívó tagsági szerepével / kérelem-állapotával együtt. Üres szűrőre
+     * az első {@value #BROWSE_LIMIT} csoport, név szerint.
      */
     @Transactional(readOnly = true)
     public List<GroupDto> browse(UUID userId, String query) {
@@ -64,16 +76,18 @@ public class GroupService {
         if (groups.isEmpty()) {
             return List.of();
         }
+        List<UUID> ids = groups.stream().map(Group::getId).toList();
 
-        // A hívó szerepe csoportonként + a taglétszámok — egy-egy lekérdezésből (N+1 nélkül).
-        Map<UUID, GroupRole> myRoles = new HashMap<>();
-        for (GroupMember m : memberRepository.findByUserId(userId)) {
-            myRoles.put(m.getGroup().getId(), m.getRole());
-        }
-        Map<UUID, Long> counts = countsByGroup(groups.stream().map(Group::getId).toList());
+        Map<UUID, GroupRole> myRoles = myRoles(userId);
+        Set<UUID> myRequests = myRequestedGroupIds(userId);
+        Map<UUID, Long> counts = memberCounts(ids);
+        Map<UUID, Long> pending = pendingCounts(ids);
 
         return groups.stream()
-                .map(g -> GroupDto.of(g, myRoles.get(g.getId()), counts.getOrDefault(g.getId(), 0L)))
+                .map(g -> GroupDto.of(g, myRoles.get(g.getId()),
+                        counts.getOrDefault(g.getId(), 0L),
+                        myRequests.contains(g.getId()),
+                        pending.getOrDefault(g.getId(), 0L)))
                 .toList();
     }
 
@@ -84,15 +98,18 @@ public class GroupService {
         if (memberships.isEmpty()) {
             return List.of();
         }
-        Map<UUID, Long> counts = countsByGroup(
-                memberships.stream().map(m -> m.getGroup().getId()).toList());
+        List<UUID> ids = memberships.stream().map(m -> m.getGroup().getId()).toList();
+        Map<UUID, Long> counts = memberCounts(ids);
+        Map<UUID, Long> pending = pendingCounts(ids);
         return memberships.stream()
                 .map(m -> GroupDto.of(m.getGroup(), m.getRole(),
-                        counts.getOrDefault(m.getGroup().getId(), 0L)))
+                        counts.getOrDefault(m.getGroup().getId(), 0L),
+                        false,
+                        pending.getOrDefault(m.getGroup().getId(), 0L)))
                 .toList();
     }
 
-    /** Egy csoport részletei a hívó szerepével. */
+    /** Egy csoport részletei a hívó szerepével / kérelem-állapotával. */
     @Transactional(readOnly = true)
     public GroupDto getGroup(UUID userId, UUID groupId) {
         Group group = groupRepository.findById(groupId).orElseThrow(ApiException::groupNotFound);
@@ -108,20 +125,27 @@ public class GroupService {
                 .toList();
     }
 
-    /** Csatlakozás egy csoporthoz (idempotens — ha már tag, nem történik semmi). */
+    /**
+     * Csatlakozás egy csoporthoz. Publikusnál azonnal taggá válik; privátnál csatlakozási
+     * kérelem jön létre (az admin hagyja jóvá). Mindkettő idempotens.
+     */
     @Transactional
     public GroupDto join(UUID userId, UUID groupId) {
         Group group = groupRepository.findById(groupId).orElseThrow(ApiException::groupNotFound);
         if (!memberRepository.existsByGroupIdAndUserId(groupId, userId)) {
             User user = userRepository.findById(userId).orElseThrow(ApiException::userNotFound);
-            memberRepository.save(new GroupMember(group, user, GroupRole.MEMBER));
+            if (group.getVisibility() == GroupVisibility.PUBLIC) {
+                memberRepository.save(new GroupMember(group, user, GroupRole.MEMBER));
+            } else if (!joinRequestRepository.existsByGroupIdAndUserId(groupId, userId)) {
+                joinRequestRepository.save(new GroupJoinRequest(group, user));
+            }
         }
         return toDto(group, userId);
     }
 
     /**
      * Kilépés egy csoportból. Idempotens, ha a hívó nem tag. Az utolsó admin nem léphet ki,
-     * amíg más tagok vannak — különben a csoport admin nélkül maradna.
+     * amíg más tagok vannak. (Egy függő csatlakozási kérelmet is visszavon, ha van.)
      */
     @Transactional
     public GroupDto leave(UUID userId, UUID groupId) {
@@ -134,7 +158,55 @@ public class GroupService {
             }
             memberRepository.delete(membership);
         });
+        // Függő kérelem visszavonása (privát csoport, ha még nem tag).
+        joinRequestRepository.findByGroupIdAndUserId(groupId, userId)
+                .ifPresent(joinRequestRepository::delete);
         return toDto(group, userId);
+    }
+
+    /** Egy privát csoport függő csatlakozási kérelmei — csak az admin láthatja. */
+    @Transactional(readOnly = true)
+    public List<GroupJoinRequestDto> listJoinRequests(UUID adminId, UUID groupId) {
+        requireAdmin(adminId, groupId);
+        return joinRequestRepository.findByGroupIdOrderByCreatedAtAsc(groupId).stream()
+                .map(GroupJoinRequestDto::of)
+                .toList();
+    }
+
+    /** Egy csatlakozási kérelem jóváhagyása — a kérelmező taggá válik. Csak admin. */
+    @Transactional
+    public void approveJoinRequest(UUID adminId, UUID groupId, UUID requesterId) {
+        requireAdmin(adminId, groupId);
+        GroupJoinRequest request = joinRequestRepository.findByGroupIdAndUserId(groupId, requesterId)
+                .orElseThrow(ApiException::joinRequestNotFound);
+        if (!memberRepository.existsByGroupIdAndUserId(groupId, requesterId)) {
+            memberRepository.save(new GroupMember(request.getGroup(), request.getUser(), GroupRole.MEMBER));
+        }
+        joinRequestRepository.delete(request);
+    }
+
+    /** Egy csatlakozási kérelem elutasítása. Csak admin. */
+    @Transactional
+    public void rejectJoinRequest(UUID adminId, UUID groupId, UUID requesterId) {
+        requireAdmin(adminId, groupId);
+        GroupJoinRequest request = joinRequestRepository.findByGroupIdAndUserId(groupId, requesterId)
+                .orElseThrow(ApiException::joinRequestNotFound);
+        joinRequestRepository.delete(request);
+    }
+
+    /** Egy tag kizárása — csak admin; admin tagot és saját magát nem lehet, a posztok maradnak. */
+    @Transactional
+    public void kickMember(UUID adminId, UUID groupId, UUID targetId) {
+        requireAdmin(adminId, groupId);
+        if (adminId.equals(targetId)) {
+            throw ApiException.cannotKickSelf();
+        }
+        GroupMember target = memberRepository.findByGroupIdAndUserId(groupId, targetId)
+                .orElseThrow(ApiException::targetNotGroupMember);
+        if (target.getRole() == GroupRole.ADMIN) {
+            throw ApiException.cannotKickAdmin();
+        }
+        memberRepository.delete(target);
     }
 
     /** Egy csoport bejegyzései időrendben (a csoport létezését ellenőrizzük). */
@@ -154,21 +226,78 @@ public class GroupService {
         return postService.create(userId, request, group);
     }
 
+    /** Egy csoport-bejegyzés törlése — a szerző vagy a csoport admin teheti (moderáció). */
+    @Transactional
+    public void deletePost(UUID userId, UUID groupId, UUID postId) {
+        requireGroup(groupId);
+        Post post = postRepository.findById(postId).orElseThrow(ApiException::postNotFound);
+        if (post.getGroup() == null || !post.getGroup().getId().equals(groupId)) {
+            throw ApiException.postNotFound();
+        }
+        boolean isAuthor = post.getAuthor().getId().equals(userId);
+        if (!isAuthor && !isAdmin(userId, groupId)) {
+            throw ApiException.notGroupAdmin();
+        }
+        postService.deleteAuthorized(post);
+    }
+
     // --- segédek ---
 
     private GroupDto toDto(Group group, UUID userId) {
         GroupRole role = memberRepository.findByGroupIdAndUserId(group.getId(), userId)
                 .map(GroupMember::getRole)
                 .orElse(null);
-        return GroupDto.of(group, role, memberRepository.countByGroupId(group.getId()));
+        boolean requested = role == null
+                && joinRequestRepository.existsByGroupIdAndUserId(group.getId(), userId);
+        long pending = role == GroupRole.ADMIN
+                ? joinRequestRepository.countByGroupId(group.getId()) : 0;
+        return GroupDto.of(group, role, memberRepository.countByGroupId(group.getId()),
+                requested, pending);
     }
 
-    private Map<UUID, Long> countsByGroup(List<UUID> groupIds) {
+    private Map<UUID, GroupRole> myRoles(UUID userId) {
+        Map<UUID, GroupRole> roles = new HashMap<>();
+        for (GroupMember m : memberRepository.findByUserId(userId)) {
+            roles.put(m.getGroup().getId(), m.getRole());
+        }
+        return roles;
+    }
+
+    private Set<UUID> myRequestedGroupIds(UUID userId) {
+        Set<UUID> ids = new HashSet<>();
+        for (GroupJoinRequest r : joinRequestRepository.findByUserId(userId)) {
+            ids.add(r.getGroup().getId());
+        }
+        return ids;
+    }
+
+    private Map<UUID, Long> memberCounts(List<UUID> groupIds) {
+        return toCountMap(memberRepository.countByGroupIds(groupIds));
+    }
+
+    private Map<UUID, Long> pendingCounts(List<UUID> groupIds) {
+        return toCountMap(joinRequestRepository.countByGroupIds(groupIds));
+    }
+
+    private static Map<UUID, Long> toCountMap(List<Object[]> rows) {
         Map<UUID, Long> counts = new HashMap<>();
-        for (Object[] row : memberRepository.countByGroupIds(groupIds)) {
+        for (Object[] row : rows) {
             counts.put((UUID) row[0], (Long) row[1]);
         }
         return counts;
+    }
+
+    private boolean isAdmin(UUID userId, UUID groupId) {
+        return memberRepository.findByGroupIdAndUserId(groupId, userId)
+                .map(m -> m.getRole() == GroupRole.ADMIN)
+                .orElse(false);
+    }
+
+    private void requireAdmin(UUID userId, UUID groupId) {
+        requireGroup(groupId);
+        if (!isAdmin(userId, groupId)) {
+            throw ApiException.notGroupAdmin();
+        }
     }
 
     private void requireGroup(UUID groupId) {

@@ -3,6 +3,8 @@ package com.nexa.group;
 import com.nexa.user.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
@@ -35,6 +37,15 @@ public class Group {
     @Column(length = 500)
     private String description;
 
+    /**
+     * Láthatóság / csatlakozási mód. A {@code default 'PUBLIC'} azért kell, hogy a már
+     * létező (e mező bevezetése előtti) csoportsorok is érvényes értéket kapjanak az
+     * automatikus séma-frissítéskor.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20, columnDefinition = "varchar(20) default 'PUBLIC'")
+    private GroupVisibility visibility = GroupVisibility.PUBLIC;
+
     /** A csoport létrehozója (egyben az első admin). */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "created_by", nullable = false)
@@ -47,9 +58,10 @@ public class Group {
         // JPA
     }
 
-    public Group(String name, String description, User createdBy) {
+    public Group(String name, String description, GroupVisibility visibility, User createdBy) {
         this.name = name;
         this.description = description;
+        this.visibility = visibility;
         this.createdBy = createdBy;
     }
 
@@ -71,6 +83,14 @@ public class Group {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public GroupVisibility getVisibility() {
+        return visibility;
+    }
+
+    public void setVisibility(GroupVisibility visibility) {
+        this.visibility = visibility;
     }
 
     public User getCreatedBy() {

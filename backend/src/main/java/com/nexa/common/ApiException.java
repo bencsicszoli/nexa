@@ -138,4 +138,53 @@ public class ApiException extends RuntimeException {
         return new ApiException(HttpStatus.CONFLICT, "GROUP_LAST_ADMIN",
                 "You are the only admin — promote another member or remove the others before leaving.");
     }
+
+    /** A művelethez csoport-admin jogosultság kell. */
+    public static ApiException notGroupAdmin() {
+        return new ApiException(HttpStatus.FORBIDDEN, "NOT_GROUP_ADMIN",
+                "Only a group admin can do that.");
+    }
+
+    /** Nem létező vagy nem ehhez a csoporthoz tartozó csatlakozási kérelem. */
+    public static ApiException joinRequestNotFound() {
+        return new ApiException(HttpStatus.NOT_FOUND, "GROUP_JOIN_REQUEST_NOT_FOUND",
+                "Join request not found.");
+    }
+
+    /** Saját magát az admin nem zárhatja ki (kilépni a /leave végponttal lehet). */
+    public static ApiException cannotKickSelf() {
+        return new ApiException(HttpStatus.BAD_REQUEST, "CANNOT_KICK_SELF",
+                "You cannot remove yourself — use leave instead.");
+    }
+
+    /** Admin tagot nem lehet kizárni. */
+    public static ApiException cannotKickAdmin() {
+        return new ApiException(HttpStatus.BAD_REQUEST, "CANNOT_KICK_ADMIN",
+                "You cannot remove a group admin.");
+    }
+
+    /** A kizárni kívánt felhasználó nem tagja a csoportnak. */
+    public static ApiException targetNotGroupMember() {
+        return new ApiException(HttpStatus.NOT_FOUND, "TARGET_NOT_GROUP_MEMBER",
+                "That user is not a member of this group.");
+    }
+
+    // --- Hozzászólások (#9 kiegészítés) ---
+
+    /** Nem létező hozzászólás/válasz (a létezést sem szivárogtatjuk töröltnél). */
+    public static ApiException commentNotFound() {
+        return new ApiException(HttpStatus.NOT_FOUND, "COMMENT_NOT_FOUND", "Comment not found.");
+    }
+
+    /** Üres hozzászólás-szöveg nem engedett. */
+    public static ApiException emptyComment() {
+        return new ApiException(HttpStatus.BAD_REQUEST, "EMPTY_COMMENT",
+                "A comment cannot be empty.");
+    }
+
+    /** A megadott szülő-hozzászólás nem ehhez a bejegyzéshez tartozik. */
+    public static ApiException invalidCommentParent() {
+        return new ApiException(HttpStatus.BAD_REQUEST, "INVALID_COMMENT_PARENT",
+                "The parent comment does not belong to this post.");
+    }
 }

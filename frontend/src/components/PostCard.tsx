@@ -2,29 +2,14 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Loader2, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import Avatar from './Avatar'
+import Comments from './Comments'
+import { useAuth } from '../auth/AuthContext'
 import { errorKey } from '../auth/errorKey'
+import { formatRelativeTime } from '../lib/time'
 import { deletePost, updatePost } from '../posts/postApi'
 import type { Post, PostMedia } from '../posts/types'
 
 const MAX_CHARS = 5000
-
-/** Emberbarát időbélyeg: friss posztoknál relatív, régebbinél lokalizált dátum. */
-function formatTime(iso: string, lang: string): string {
-  const date = new Date(iso)
-  const diffMs = Date.now() - date.getTime()
-  const diffSec = Math.round(diffMs / 1000)
-  const rtf = new Intl.RelativeTimeFormat(lang, { numeric: 'auto' })
-
-  if (diffSec < 60) return rtf.format(-diffSec, 'second')
-  const diffMin = Math.round(diffSec / 60)
-  if (diffMin < 60) return rtf.format(-diffMin, 'minute')
-  const diffHour = Math.round(diffMin / 60)
-  if (diffHour < 24) return rtf.format(-diffHour, 'hour')
-  const diffDay = Math.round(diffHour / 24)
-  if (diffDay < 7) return rtf.format(-diffDay, 'day')
-
-  return date.toLocaleDateString(lang, { year: 'numeric', month: 'short', day: 'numeric' })
-}
 
 /** A poszthoz csatolt média rácsa: képek és beágyazott videolejátszó. */
 function MediaGrid({ media }: { media: PostMedia[] }) {
@@ -68,14 +53,36 @@ type Props = {
   post: Post
   /** Ha igaz, megjelenik a szerkesztés/törlés menü (a saját posztoknál). */
   editable?: boolean
+  /**
+   * Ha meg van adva (és a poszt nem szerkeszthető saját jogon), megjelenik egy
+   * moderációs „Törlés" művelet, ami ezt hívja a saját törlés helyett — csoport-admin
+   * idegen csoport-posztjának eltávolításához (#9 kiegészítés).
+   */
+  onModerateDelete?: (id: string) => Promise<void>
   /** A sikeresen szerkesztett bejegyzéssel hívódik meg. */
   onUpdated?: (post: Post) => void
   /** A sikeresen törölt bejegyzés azonosítójával hívódik meg. */
   onDeleted?: (id: string) => void
+  /** Hozzászólhat-e a felhasználó ehhez a bejegyzéshez (csoportposztnál csak tag). Alap: igen. */
+  canComment?: boolean
+  /** Csoport-bejegyzés-e (a komment-moderáció ekkor KIZÁRÓLAG a csoport adminé, nem a posztolóé). */
+  isGroupPost?: boolean
+  /** Csoport-admin-e a néző — a csoport-poszt hozzászólásainak moderálásához. */
+  isGroupAdmin?: boolean
 }
 
-export default function PostCard({ post, editable, onUpdated, onDeleted }: Props) {
+export default function PostCard({
+  post,
+  editable,
+  onModerateDelete,
+  onUpdated,
+  onDeleted,
+  canComment = true,
+  isGroupPost = false,
+  isGroupAdmin = false,
+}: Props) {
   const { t, i18n } = useTranslation()
+  const { user } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
   const [editing, setEditing] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
@@ -83,6 +90,9 @@ export default function PostCard({ post, editable, onUpdated, onDeleted }: Props
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
+
+  // Akkor van „…" menü, ha a saját posztját szerkesztheti/törölheti, vagy moderátorként törölheti.
+  const showMenu = editable || !!onModerateDelete
 
   // Menü bezárása kívülre kattintáskor.
   useEffect(() => {
@@ -130,7 +140,9 @@ export default function PostCard({ post, editable, onUpdated, onDeleted }: Props
     setBusy(true)
     setError(null)
     try {
-      await deletePost(post.id)
+      // Saját jogon a poszt-végpont; moderátorként a hívó által adott törlés.
+      if (editable) await deletePost(post.id)
+      else await onModerateDelete!(post.id)
       onDeleted?.(post.id)
     } catch (err) {
       setError(errorKey(err))
@@ -151,11 +163,11 @@ export default function PostCard({ post, editable, onUpdated, onDeleted }: Props
             title={new Date(post.createdAt).toLocaleString(i18n.language)}
             className="text-xs text-slate-400"
           >
-            {formatTime(post.createdAt, i18n.language)}
+            {formatRelativeTime(post.createdAt, i18n.language)}
           </time>
         </div>
 
-        {editable && !editing && (
+        {showMenu && !editing && (
           <div className="relative ml-auto" ref={menuRef}>
             <button
               type="button"
@@ -172,15 +184,17 @@ export default function PostCard({ post, editable, onUpdated, onDeleted }: Props
                 role="menu"
                 className="absolute right-0 top-9 z-10 w-40 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg"
               >
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={startEdit}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
-                >
-                  <Pencil className="h-4 w-4" />
-                  {t('posts.edit')}
-                </button>
+                {editable && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={startEdit}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
+                  >
+                    <Pencil className="h-4 w-4" />
+                    {t('posts.edit')}
+                  </button>
+                )}
                 <button
                   type="button"
                   role="menuitem"
@@ -272,6 +286,15 @@ export default function PostCard({ post, editable, onUpdated, onDeleted }: Props
             </button>
           </div>
         </div>
+      )}
+
+      {!editing && (
+        <Comments
+          postId={post.id}
+          canComment={canComment}
+          // Csoportposztnál csak az admin moderál; profilposztnál a bejegyzés szerzője.
+          canModerate={isGroupPost ? isGroupAdmin : post.authorId === user?.id}
+        />
       )}
     </article>
   )

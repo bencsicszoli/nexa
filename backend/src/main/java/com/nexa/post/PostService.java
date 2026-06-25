@@ -108,8 +108,21 @@ public class PostService {
     /** Egy bejegyzés törlése — csak a szerző teheti; a csatolt médiafájlok is törlődnek. */
     @Transactional
     public void delete(UUID authorId, UUID postId) {
-        Post post = loadOwnPost(authorId, postId);
-        // A média kulcsait a DB-rekord törlése ELŐTT gyűjtjük ki; a fájltörlés commit után fut.
+        deletePostWithMedia(loadOwnPost(authorId, postId));
+    }
+
+    /**
+     * Egy bejegyzés törlése a jogosultság-ellenőrzés <b>kihagyásával</b>, médiatakarítással.
+     * Csak akkor hívható, ha a hívó már engedélyezte a műveletet (pl. csoport-admin moderáció,
+     * {@code com.nexa.group.GroupService}).
+     */
+    @Transactional
+    public void deleteAuthorized(Post post) {
+        deletePostWithMedia(post);
+    }
+
+    /** A média kulcsait a DB-rekord törlése ELŐTT gyűjti ki; a fájltörlés commit után fut. */
+    private void deletePostWithMedia(Post post) {
         List<String> mediaKeys = post.getMedia().stream()
                 .map(m -> storageService.keyFromPublicUrl(m.getUrl()))
                 .toList();

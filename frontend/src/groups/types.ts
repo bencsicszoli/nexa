@@ -3,14 +3,22 @@
 /** A bejelentkezett felhasználó szerepe egy csoportban, vagy null, ha nem tagja. */
 export type GroupRole = 'ADMIN' | 'MEMBER'
 
+/** Csoport láthatósága / csatlakozási mód. */
+export type GroupVisibility = 'PUBLIC' | 'PRIVATE'
+
 /** Egy csoport a böngészéshez és a csoportoldalhoz. */
 export type Group = {
   id: string
   name: string
   description: string | null
+  visibility: GroupVisibility
   memberCount: number
-  /** A hívó szerepe; null = nem tag (a UI „Csatlakozás"-t ajánl). */
+  /** A hívó szerepe; null = nem tag. */
   role: GroupRole | null
+  /** Igaz, ha a hívónak függő csatlakozási kérelme van (privát csoport). */
+  requested: boolean
+  /** Függő kérelmek száma — csak adminnak releváns (egyébként 0). */
+  pendingCount: number
   createdAt: string
 }
 
@@ -21,4 +29,12 @@ export type GroupMember = {
   avatarUrl: string | null
   role: GroupRole
   joinedAt: string
+}
+
+/** Egy függő csatlakozási kérelem az admin jóváhagyó nézetéhez. */
+export type GroupJoinRequest = {
+  userId: string
+  displayName: string
+  avatarUrl: string | null
+  requestedAt: string
 }

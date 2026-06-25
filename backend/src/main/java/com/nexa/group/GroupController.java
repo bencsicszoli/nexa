@@ -2,12 +2,14 @@ package com.nexa.group;
 
 import com.nexa.group.dto.CreateGroupRequest;
 import com.nexa.group.dto.GroupDto;
+import com.nexa.group.dto.GroupJoinRequestDto;
 import com.nexa.group.dto.GroupMemberDto;
 import com.nexa.post.dto.CreatePostRequest;
 import com.nexa.post.dto.PostDto;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -82,6 +84,43 @@ public class GroupController {
         return groupService.leave(userId, groupId);
     }
 
+    /** Egy privát csoport függő csatlakozási kérelmei (csak admin). */
+    @GetMapping("/{groupId}/requests")
+    public List<GroupJoinRequestDto> joinRequests(
+            @AuthenticationPrincipal UUID userId, @PathVariable UUID groupId) {
+        return groupService.listJoinRequests(userId, groupId);
+    }
+
+    /** Egy csatlakozási kérelem jóváhagyása (csak admin). */
+    @PostMapping("/{groupId}/requests/{requesterId}/approve")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void approveRequest(
+            @AuthenticationPrincipal UUID userId,
+            @PathVariable UUID groupId,
+            @PathVariable UUID requesterId) {
+        groupService.approveJoinRequest(userId, groupId, requesterId);
+    }
+
+    /** Egy csatlakozási kérelem elutasítása (csak admin). */
+    @DeleteMapping("/{groupId}/requests/{requesterId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void rejectRequest(
+            @AuthenticationPrincipal UUID userId,
+            @PathVariable UUID groupId,
+            @PathVariable UUID requesterId) {
+        groupService.rejectJoinRequest(userId, groupId, requesterId);
+    }
+
+    /** Egy tag kizárása a csoportból (csak admin). */
+    @DeleteMapping("/{groupId}/members/{memberId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void kickMember(
+            @AuthenticationPrincipal UUID userId,
+            @PathVariable UUID groupId,
+            @PathVariable UUID memberId) {
+        groupService.kickMember(userId, groupId, memberId);
+    }
+
     /** Egy csoport bejegyzései időrendben. */
     @GetMapping("/{groupId}/posts")
     public List<PostDto> posts(@PathVariable UUID groupId) {
@@ -96,5 +135,15 @@ public class GroupController {
             @PathVariable UUID groupId,
             @Valid @RequestBody CreatePostRequest request) {
         return groupService.createPost(userId, groupId, request);
+    }
+
+    /** Egy csoport-bejegyzés törlése (a szerző vagy a csoport admin — moderáció). */
+    @DeleteMapping("/{groupId}/posts/{postId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deletePost(
+            @AuthenticationPrincipal UUID userId,
+            @PathVariable UUID groupId,
+            @PathVariable UUID postId) {
+        groupService.deletePost(userId, groupId, postId);
     }
 }

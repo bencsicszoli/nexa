@@ -1,7 +1,7 @@
 import { apiFetch } from '../lib/api'
 import type { PostMediaInput } from '../posts/postApi'
 import type { Post } from '../posts/types'
-import type { Group, GroupMember } from './types'
+import type { Group, GroupJoinRequest, GroupMember, GroupVisibility } from './types'
 
 // A backend /api/groups végpontjai (lásd com.nexa.group.GroupController).
 
@@ -39,10 +39,14 @@ export function getGroupMembers(groupId: string): Promise<GroupMember[]> {
 }
 
 /** Új csoport létrehozása (a létrehozó admin lesz). */
-export async function createGroup(name: string, description: string): Promise<Group> {
+export async function createGroup(
+  name: string,
+  description: string,
+  visibility: GroupVisibility,
+): Promise<Group> {
   const group = await apiFetch<Group>('/groups', {
     method: 'POST',
-    body: { name, description },
+    body: { name, description, visibility },
   })
   emitGroupsChanged()
   return group
@@ -77,4 +81,31 @@ export function createGroupPost(
     method: 'POST',
     body: { content, media },
   })
+}
+
+/** Egy csoport-bejegyzés törlése moderációként (a szerző vagy a csoport admin). */
+export function deleteGroupPost(groupId: string, postId: string): Promise<void> {
+  return apiFetch<void>(`/groups/${groupId}/posts/${postId}`, { method: 'DELETE' })
+}
+
+// --- Admin: csatlakozási kérelmek és tagok kezelése ---
+
+/** Egy privát csoport függő csatlakozási kérelmei (csak admin). */
+export function getJoinRequests(groupId: string): Promise<GroupJoinRequest[]> {
+  return apiFetch<GroupJoinRequest[]>(`/groups/${groupId}/requests`)
+}
+
+/** Egy csatlakozási kérelem jóváhagyása (csak admin). */
+export function approveJoinRequest(groupId: string, userId: string): Promise<void> {
+  return apiFetch<void>(`/groups/${groupId}/requests/${userId}/approve`, { method: 'POST' })
+}
+
+/** Egy csatlakozási kérelem elutasítása (csak admin). */
+export function rejectJoinRequest(groupId: string, userId: string): Promise<void> {
+  return apiFetch<void>(`/groups/${groupId}/requests/${userId}`, { method: 'DELETE' })
+}
+
+/** Egy tag kizárása a csoportból (csak admin). */
+export function kickMember(groupId: string, userId: string): Promise<void> {
+  return apiFetch<void>(`/groups/${groupId}/members/${userId}`, { method: 'DELETE' })
 }
