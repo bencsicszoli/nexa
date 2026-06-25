@@ -1,6 +1,7 @@
 package com.nexa.post;
 
 import com.nexa.common.ApiException;
+import com.nexa.group.Group;
 import com.nexa.post.dto.CreatePostRequest;
 import com.nexa.post.dto.PostDto;
 import com.nexa.storage.DeferredStorageDeleter;
@@ -52,8 +53,18 @@ public class PostService {
         return storageService.createUpload(MEDIA_PREFIX, normalized);
     }
 
+    /** Profil-bejegyzés létrehozása (nincs csoport). */
     @Transactional
     public PostDto create(UUID authorId, CreatePostRequest request) {
+        return create(authorId, request, null);
+    }
+
+    /**
+     * Bejegyzés létrehozása. {@code group} nullnál profil-poszt, egyébként a csoportba
+     * kerül (a tagság ellenőrzése a hívó {@code GroupService} dolga).
+     */
+    @Transactional
+    public PostDto create(UUID authorId, CreatePostRequest request, Group group) {
         User author = userRepository.findById(authorId).orElseThrow(ApiException::userNotFound);
 
         String content = request.content() == null ? "" : request.content().trim();
@@ -64,7 +75,7 @@ public class PostService {
             throw ApiException.emptyPost();
         }
 
-        Post post = postRepository.save(new Post(author, content, media));
+        Post post = postRepository.save(new Post(author, content, media, group));
         return PostDto.from(post);
     }
 
@@ -115,10 +126,19 @@ public class PostService {
         return post;
     }
 
-    /** Egy felhasználó bejegyzései időrendben (legfrissebb felül). */
+    /** Egy felhasználó profil-bejegyzései időrendben (legfrissebb felül, csoport-posztok nélkül). */
     @Transactional(readOnly = true)
     public List<PostDto> listByAuthor(UUID authorId) {
-        return postRepository.findByAuthorIdOrderByCreatedAtDesc(authorId)
+        return postRepository.findByAuthorIdAndGroupIsNullOrderByCreatedAtDesc(authorId)
+                .stream()
+                .map(PostDto::from)
+                .toList();
+    }
+
+    /** Egy csoport bejegyzései időrendben (legfrissebb felül, #9). */
+    @Transactional(readOnly = true)
+    public List<PostDto> listByGroup(UUID groupId) {
+        return postRepository.findByGroupIdOrderByCreatedAtDesc(groupId)
                 .stream()
                 .map(PostDto::from)
                 .toList();

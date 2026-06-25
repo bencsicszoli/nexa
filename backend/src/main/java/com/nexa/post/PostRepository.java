@@ -7,6 +7,13 @@ import java.util.UUID;
 
 public interface PostRepository extends JpaRepository<Post, UUID> {
 
-    /** Egy szerző bejegyzései időrendben, legfrissebb felül (profil-időrend). */
-    List<Post> findByAuthorIdOrderByCreatedAtDesc(UUID authorId);
+    /**
+     * Egy szerző profil-bejegyzései időrendben, legfrissebb felül (profil-időrend).
+     * A csoportba írt posztok ({@code group} nem null) szándékosan kimaradnak — azok
+     * a csoportoldalon jelennek meg, nem a szerző profilján.
+     */
+    List<Post> findByAuthorIdAndGroupIsNullOrderByCreatedAtDesc(UUID authorId);
+
+    /** Egy csoport bejegyzései időrendben, legfrissebb felül (csoport-időrend, #9). */
+    List<Post> findByGroupIdOrderByCreatedAtDesc(UUID groupId);
 }

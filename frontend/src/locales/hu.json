@@ -96,6 +96,36 @@
     "followed": "Követés bekapcsolva.",
     "unfollowed": "Követés kikapcsolva."
   },
+  "groups": {
+    "title": "Csoportok",
+    "subtitle": "Hozz létre vagy csatlakozz csoportokhoz, és posztolj a tagoknak.",
+    "tab": {
+      "mine": "Csoportjaim",
+      "discover": "Felfedezés"
+    },
+    "create": "Csoport létrehozása",
+    "creating": "Létrehozás…",
+    "cancel": "Mégse",
+    "nameLabel": "Csoport neve",
+    "namePlaceholder": "pl. Fotósok köre",
+    "descriptionLabel": "Leírás (opcionális)",
+    "descriptionPlaceholder": "Miről szól a csoport?",
+    "searchPlaceholder": "Csoportok keresése név alapján…",
+    "mineEmpty": "Még nem vagy tagja egyetlen csoportnak sem. Fedezz fel csoportokat a „Felfedezés\" fülön.",
+    "discoverEmpty": "Nincs találat.",
+    "join": "Csatlakozás",
+    "leave": "Kilépés",
+    "members": "Tagok",
+    "memberCount_one": "{{count}} tag",
+    "memberCount_other": "{{count}} tag",
+    "adminBadge": "Admin",
+    "joinToPost": "Csatlakozz a csoporthoz, hogy posztolhass.",
+    "postsEmpty": "Még nincs bejegyzés ebben a csoportban. Legyél te az első!",
+    "backToGroups": "Vissza a csoportokhoz",
+    "created": "A csoport létrejött.",
+    "joined": "Csatlakoztál a csoporthoz.",
+    "left": "Kiléptél a csoportból."
+  },
   "feed": {
     "emptyTitle": "Még üres a hírfolyamod",
     "emptySubtitle": "Itt jelennek meg majd időrendben az ismerőseid, a követett alkotók és a csoportjaid bejegyzései — legfrissebb felül."
@@ -188,6 +218,9 @@
       "FRIEND_REQUEST_NOT_FOUND": "A kérés nem található.",
       "NOT_FRIENDS": "Nem vagytok ismerősök.",
       "CANNOT_FOLLOW_SELF": "Saját magadat nem követheted.",
+      "GROUP_NOT_FOUND": "A csoport nem található.",
+      "NOT_GROUP_MEMBER": "Ehhez a csoport tagjának kell lenned.",
+      "GROUP_LAST_ADMIN": "Te vagy az egyetlen admin — előbb adj admin jogot valaki másnak, vagy távolítsd el a többi tagot.",
       "NETWORK": "Nem sikerült elérni a szervert. Próbáld újra.",
       "UNKNOWN_ERROR": "Hiba történt. Próbáld újra."
     }

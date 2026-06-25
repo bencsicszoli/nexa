@@ -96,6 +96,36 @@
     "followed": "Now following.",
     "unfollowed": "Unfollowed."
   },
+  "groups": {
+    "title": "Groups",
+    "subtitle": "Create or join groups and post to their members.",
+    "tab": {
+      "mine": "My groups",
+      "discover": "Discover"
+    },
+    "create": "Create group",
+    "creating": "Creating…",
+    "cancel": "Cancel",
+    "nameLabel": "Group name",
+    "namePlaceholder": "e.g. Photographers' circle",
+    "descriptionLabel": "Description (optional)",
+    "descriptionPlaceholder": "What is this group about?",
+    "searchPlaceholder": "Search groups by name…",
+    "mineEmpty": "You're not a member of any group yet. Discover groups on the \"Discover\" tab.",
+    "discoverEmpty": "No results.",
+    "join": "Join",
+    "leave": "Leave",
+    "members": "Members",
+    "memberCount_one": "{{count}} member",
+    "memberCount_other": "{{count}} members",
+    "adminBadge": "Admin",
+    "joinToPost": "Join the group to post.",
+    "postsEmpty": "No posts in this group yet. Be the first!",
+    "backToGroups": "Back to groups",
+    "created": "Group created.",
+    "joined": "You joined the group.",
+    "left": "You left the group."
+  },
   "feed": {
     "emptyTitle": "Your feed is empty",
     "emptySubtitle": "Posts from your friends, followed creators and groups will appear here in chronological order — newest first."
@@ -182,6 +212,15 @@
       "USER_NOT_FOUND": "User not found.",
       "POST_NOT_FOUND": "Post not found.",
       "CANNOT_FOLLOW_SELF": "You cannot follow yourself.",
+      "SELF_FRIEND_REQUEST": "You cannot send a friend request to yourself.",
+      "ALREADY_FRIENDS": "You are already friends.",
+      "FRIEND_REQUEST_ALREADY_SENT": "You have already sent a request to this user.",
+      "REVERSE_FRIEND_REQUEST_EXISTS": "This user has already sent you a request — accept it on the Requests tab.",
+      "FRIEND_REQUEST_NOT_FOUND": "Request not found.",
+      "NOT_FRIENDS": "You are not friends.",
+      "GROUP_NOT_FOUND": "Group not found.",
+      "NOT_GROUP_MEMBER": "You must be a member of this group to do that.",
+      "GROUP_LAST_ADMIN": "You are the only admin — promote another member or remove the others before leaving.",
       "NETWORK": "Could not reach the server. Please try again.",
       "UNKNOWN_ERROR": "Something went wrong. Please try again."
     }

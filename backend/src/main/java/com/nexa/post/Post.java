@@ -1,5 +1,6 @@
 package com.nexa.post;
 
+import com.nexa.group.Group;
 import com.nexa.user.User;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -27,7 +28,9 @@ import java.util.UUID;
 @Entity
 @Table(name = "posts", indexes = {
         // A profil-időrend (szerző szerint, legfrissebb felül) gyakori lekérdezés.
-        @Index(name = "idx_posts_author_created", columnList = "author_id, created_at")
+        @Index(name = "idx_posts_author_created", columnList = "author_id, created_at"),
+        // A csoport-időrend (csoport szerint, legfrissebb felül) a csoportoldalhoz (#9).
+        @Index(name = "idx_posts_group_created", columnList = "group_id, created_at")
 })
 public class Post {
 
@@ -38,6 +41,15 @@ public class Post {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "author_id", nullable = false)
     private User author;
+
+    /**
+     * A csoport, amelybe a bejegyzés kerül (#9). {@code null} a „közönséges" (profil)
+     * posztoknál; a profil-időrend csak ez utóbbiakat mutatja, a csoportoldal pedig
+     * kizárólag az adott csoport posztjait.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "group_id")
+    private Group group;
 
     /**
      * A bejegyzés szövege. Hosszú szöveg → {@code text} oszlop. Csak médiát tartalmazó
@@ -60,11 +72,16 @@ public class Post {
     }
 
     public Post(User author, String content, List<PostMedia> media) {
+        this(author, content, media, null);
+    }
+
+    public Post(User author, String content, List<PostMedia> media, Group group) {
         this.author = author;
         this.content = content;
         if (media != null) {
             this.media = media;
         }
+        this.group = group;
     }
 
     public UUID getId() {
@@ -73,6 +90,11 @@ public class Post {
 
     public User getAuthor() {
         return author;
+    }
+
+    /** A csoport, amelybe a poszt tartozik, vagy {@code null}, ha profil-poszt. */
+    public Group getGroup() {
+        return group;
     }
 
     public String getContent() {

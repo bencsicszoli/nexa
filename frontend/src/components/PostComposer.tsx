@@ -10,6 +10,7 @@ import {
   uploadPostMediaFile,
   type PostMediaInput,
 } from '../posts/postApi'
+import { createGroupPost } from '../groups/groupsApi'
 import type { MediaType, Post } from '../posts/types'
 
 const MAX_CHARS = 5000
@@ -50,6 +51,8 @@ type Attachment = {
 type Props = {
   /** A sikeresen létrehozott bejegyzéssel hívódik meg (pl. a lista elejére fűzéshez). */
   onCreated: (post: Post) => void
+  /** Ha meg van adva, a bejegyzés ebbe a csoportba kerül (#9), nem a profilra. */
+  groupId?: string
 }
 
 let attachmentSeq = 0
@@ -57,8 +60,9 @@ let attachmentSeq = 0
 /**
  * Szerkesztődoboz új bejegyzéshez: szöveg + kép/videó csatolás (#6 kártya).
  * A média presigned URL-re tölt fel (a posztot csak a kulccsal hozza létre).
+ * {@code groupId} esetén a bejegyzés az adott csoportba kerül (#9).
  */
-export default function PostComposer({ onCreated }: Props) {
+export default function PostComposer({ onCreated, groupId }: Props) {
   const { t } = useTranslation()
   const { user } = useAuth()
   const [content, setContent] = useState('')
@@ -146,7 +150,9 @@ export default function PostComposer({ onCreated }: Props) {
         type: a.type,
         sizeBytes: a.sizeBytes,
       }))
-      const post = await createPost(trimmed, media)
+      const post = groupId
+        ? await createGroupPost(groupId, trimmed, media)
+        : await createPost(trimmed, media)
       reset()
       onCreated(post)
     } catch (err) {

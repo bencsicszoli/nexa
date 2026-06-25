@@ -119,4 +119,23 @@ public class ApiException extends RuntimeException {
         return new ApiException(HttpStatus.BAD_REQUEST, "CANNOT_FOLLOW_SELF",
                 "You cannot follow yourself.");
     }
+
+    // --- Csoportok (#9) ---
+
+    /** Nem létező csoport. */
+    public static ApiException groupNotFound() {
+        return new ApiException(HttpStatus.NOT_FOUND, "GROUP_NOT_FOUND", "Group not found.");
+    }
+
+    /** A művelethez (pl. posztolás) tagság kell, de a hívó nem tagja a csoportnak. */
+    public static ApiException notGroupMember() {
+        return new ApiException(HttpStatus.FORBIDDEN, "NOT_GROUP_MEMBER",
+                "You must be a member of this group to do that.");
+    }
+
+    /** Az utolsó admin nem léphet ki, amíg más tagok vannak a csoportban. */
+    public static ApiException lastAdminCannotLeave() {
+        return new ApiException(HttpStatus.CONFLICT, "GROUP_LAST_ADMIN",
+                "You are the only admin — promote another member or remove the others before leaving.");
+    }
 }

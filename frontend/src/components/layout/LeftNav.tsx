@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NavLink } from 'react-router-dom'
 import {
@@ -11,6 +12,9 @@ import {
   Users,
 } from 'lucide-react'
 import { useFriendNotifications } from '../../friends/FriendNotificationsContext'
+import { AUTH_LOGOUT_EVENT } from '../../lib/api'
+import { GROUPS_CHANGED_EVENT, getMyGroups } from '../../groups/groupsApi'
+import type { Group } from '../../groups/types'
 
 type NavItem = {
   to: string
@@ -28,9 +32,6 @@ const PRIMARY: NavItem[] = [
   { to: '/settings', labelKey: 'nav.settings', icon: Settings },
 ]
 
-// Placeholder tag-csoportok — a valódi adat a #9 kártyával érkezik.
-const MY_GROUPS = ['Fotósok köre', 'Kódolás HU', 'Receptek']
-
 type LeftNavProps = {
   /** Mobil drawerben: navigáció után zárjuk be a menüt. */
   onNavigate?: () => void
@@ -39,6 +40,30 @@ type LeftNavProps = {
 export default function LeftNav({ onNavigate }: LeftNavProps) {
   const { t } = useTranslation()
   const { unseenCount } = useFriendNotifications()
+
+  // A felhasználó csoportjai a „Csoportjaim" szekcióhoz. Best-effort: hibát itt nem mutatunk
+  // (a /groups oldal igen). Csatlakozás/kilépés/létrehozás után a GROUPS_CHANGED_EVENT frissít.
+  const [myGroups, setMyGroups] = useState<Group[]>([])
+
+  useEffect(() => {
+    let active = true
+    const refresh = () => {
+      getMyGroups()
+        .then((groups) => {
+          if (active) setMyGroups(groups)
+        })
+        .catch(() => {})
+    }
+    refresh()
+    const onLogout = () => setMyGroups([])
+    window.addEventListener(GROUPS_CHANGED_EVENT, refresh)
+    window.addEventListener(AUTH_LOGOUT_EVENT, onLogout)
+    return () => {
+      active = false
+      window.removeEventListener(GROUPS_CHANGED_EVENT, refresh)
+      window.removeEventListener(AUTH_LOGOUT_EVENT, onLogout)
+    }
+  }, [])
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
@@ -68,24 +93,28 @@ export default function LeftNav({ onNavigate }: LeftNavProps) {
         )
       })}
 
-      <div className="mt-5 px-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
-        {t('nav.myGroups')}
-      </div>
-      <div className="mt-1 flex flex-col gap-1">
-        {MY_GROUPS.map((group) => (
-          <NavLink
-            key={group}
-            to="/groups"
-            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
-            onClick={onNavigate}
-          >
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-slate-200 text-xs font-bold text-slate-600">
-              {group[0]}
-            </span>
-            <span className="truncate">{group}</span>
-          </NavLink>
-        ))}
-      </div>
+      {myGroups.length > 0 && (
+        <>
+          <div className="mt-5 px-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+            {t('nav.myGroups')}
+          </div>
+          <div className="mt-1 flex flex-col gap-1">
+            {myGroups.map((group) => (
+              <NavLink
+                key={group.id}
+                to={`/groups/${group.id}`}
+                className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                onClick={onNavigate}
+              >
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-slate-200 text-xs font-bold text-slate-600">
+                  {group.name[0]?.toUpperCase()}
+                </span>
+                <span className="truncate">{group.name}</span>
+              </NavLink>
+            ))}
+          </div>
+        </>
+      )}
     </nav>
   )
 }
