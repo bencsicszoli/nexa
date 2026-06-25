@@ -5,7 +5,12 @@ import com.nexa.common.ApiException;
 import com.nexa.group.GroupMemberRepository;
 import com.nexa.group.GroupRole;
 import com.nexa.post.Post;
+import com.nexa.post.PostMedia;
 import com.nexa.post.PostRepository;
+import com.nexa.post.PostService;
+import com.nexa.post.dto.MediaItem;
+import com.nexa.storage.DeferredStorageDeleter;
+import com.nexa.storage.StorageService;
 import com.nexa.user.User;
 import com.nexa.user.UserRepository;
 import org.springframework.stereotype.Service;
@@ -33,13 +38,21 @@ public class CommentService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final GroupMemberRepository memberRepository;
+    private final PostService postService;
+    private final StorageService storageService;
+    private final DeferredStorageDeleter storageDeleter;
 
     public CommentService(CommentRepository commentRepository, PostRepository postRepository,
-                          UserRepository userRepository, GroupMemberRepository memberRepository) {
+                          UserRepository userRepository, GroupMemberRepository memberRepository,
+                          PostService postService, StorageService storageService,
+                          DeferredStorageDeleter storageDeleter) {
         this.commentRepository = commentRepository;
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.memberRepository = memberRepository;
+        this.postService = postService;
+        this.storageService = storageService;
+        this.storageDeleter = storageDeleter;
     }
 
     /** Egy bejegyzés hozzászólás-fája (hozzászólások időrendben, alattuk a válaszok). */
@@ -64,7 +77,8 @@ public class CommentService {
 
     /** Új hozzászólás (parentId null) vagy válasz (parentId egy meglévő komment ugyanezen poszton). */
     @Transactional
-    public CommentDto create(UUID userId, UUID postId, String content, String parentId) {
+    public CommentDto create(UUID userId, UUID postId, String content, List<MediaItem> mediaItems,
+                             String parentId) {
         Post post = postRepository.findById(postId).orElseThrow(ApiException::postNotFound);
         // Csoport-poszt alá csak a csoport tagja kommentelhet (a profil-poszt bárkinek nyitott).
         if (post.getGroup() != null
@@ -72,13 +86,15 @@ public class CommentService {
             throw ApiException.notGroupMember();
         }
         String trimmed = content == null ? "" : content.trim();
-        if (trimmed.isEmpty()) {
+        List<PostMedia> media = postService.resolveMedia(mediaItems);
+        // A hozzászóláshoz legalább szöveg vagy egy média kell.
+        if (trimmed.isEmpty() && media.isEmpty()) {
             throw ApiException.emptyComment();
         }
 
         Comment parent = resolveParent(parentId, postId);
         User author = userRepository.findById(userId).orElseThrow(ApiException::userNotFound);
-        Comment saved = commentRepository.save(new Comment(post, author, parent, trimmed));
+        Comment saved = commentRepository.save(new Comment(post, author, parent, trimmed, media));
         return CommentDto.of(saved, List.of());
     }
 
@@ -90,7 +106,8 @@ public class CommentService {
             throw ApiException.commentNotFound();
         }
         String trimmed = content == null ? "" : content.trim();
-        if (trimmed.isEmpty()) {
+        // Szöveg törölhető, ha a kommenten van média; teljesen üres komment nem maradhat.
+        if (trimmed.isEmpty() && comment.getMedia().isEmpty()) {
             throw ApiException.emptyComment();
         }
         comment.edit(trimmed, Instant.now());
@@ -107,7 +124,14 @@ public class CommentService {
         if (!canDelete(userId, comment)) {
             throw ApiException.commentNotFound();
         }
-        commentRepository.deleteAllById(descendantIds(comment));
+        // A komment és minden válasza törlődik; a csatolt médiafájlok a commit után, best-effort.
+        List<Comment> subtree = subtree(comment);
+        List<String> mediaKeys = subtree.stream()
+                .flatMap(c -> c.getMedia().stream())
+                .map(m -> storageService.keyFromPublicUrl(m.getUrl()))
+                .toList();
+        commentRepository.deleteAll(subtree);
+        storageDeleter.deleteAfterCommit(mediaKeys);
     }
 
     // --- segédek ---
@@ -152,22 +176,22 @@ public class CommentService {
                 .orElse(false);
     }
 
-    /** A komment azonosítója + minden (tranzitív) válaszának azonosítója — a részfa törléséhez. */
-    private List<UUID> descendantIds(Comment root) {
+    /** A komment + minden (tranzitív) válasza — a részfa törléséhez (médiakulcsokkal együtt). */
+    private List<Comment> subtree(Comment root) {
         List<Comment> all = commentRepository.findByPostIdOrderByCreatedAtAsc(root.getPost().getId());
-        Map<UUID, List<UUID>> childIds = new HashMap<>();
+        Map<UUID, List<Comment>> childrenByParent = new HashMap<>();
         for (Comment c : all) {
             if (c.getParent() != null) {
-                childIds.computeIfAbsent(c.getParent().getId(), k -> new ArrayList<>()).add(c.getId());
+                childrenByParent.computeIfAbsent(c.getParent().getId(), k -> new ArrayList<>()).add(c);
             }
         }
-        List<UUID> result = new ArrayList<>();
-        Deque<UUID> stack = new ArrayDeque<>();
-        stack.push(root.getId());
+        List<Comment> result = new ArrayList<>();
+        Deque<Comment> stack = new ArrayDeque<>();
+        stack.push(root);
         while (!stack.isEmpty()) {
-            UUID id = stack.pop();
-            result.add(id);
-            childIds.getOrDefault(id, List.of()).forEach(stack::push);
+            Comment c = stack.pop();
+            result.add(c);
+            childrenByParent.getOrDefault(c.getId(), List.of()).forEach(stack::push);
         }
         return result;
     }

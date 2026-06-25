@@ -1,4 +1,5 @@
 import { apiFetch } from '../lib/api'
+import type { PostMediaInput } from '../posts/postApi'
 import type { Comment } from './types'
 
 // A backend hozzászólás-végpontjai (lásd com.nexa.comment.CommentController).
@@ -8,15 +9,16 @@ export function getComments(postId: string): Promise<Comment[]> {
   return apiFetch<Comment[]>(`/posts/${postId}/comments`)
 }
 
-/** Új hozzászólás (parentId nélkül) vagy válasz (parentId egy meglévő kommentre). */
+/** Új hozzászólás (parentId nélkül) vagy válasz (parentId egy meglévő kommentre), opcionális médiával. */
 export function createComment(
   postId: string,
   content: string,
+  media: PostMediaInput[] = [],
   parentId?: string,
 ): Promise<Comment> {
   return apiFetch<Comment>(`/posts/${postId}/comments`, {
     method: 'POST',
-    body: parentId ? { content, parentId } : { content },
+    body: parentId ? { content, media, parentId } : { content, media },
   })
 }
 

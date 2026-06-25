@@ -1,12 +1,21 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Loader2, MessageCircle } from 'lucide-react'
+import { ImagePlus, Loader2, MessageCircle, Video } from 'lucide-react'
 import Avatar from './Avatar'
+import {
+  AttachmentGrid,
+  IMAGE_ACCEPT,
+  MAX_MEDIA,
+  VIDEO_ACCEPT,
+  useMediaAttachments,
+} from './mediaAttachments'
 import { useAuth } from '../auth/AuthContext'
 import { errorKey } from '../auth/errorKey'
 import { formatRelativeTime } from '../lib/time'
 import { createComment, deleteComment, getComments, updateComment } from '../comments/commentsApi'
 import type { Comment } from '../comments/types'
+import type { PostMediaInput } from '../posts/postApi'
+import type { PostMedia } from '../posts/types'
 
 const MAX_CHARS = 2000
 // A vizuális behúzást néhány szint után nem mélyítjük tovább (mély szálaknál a hely megóvása).
@@ -103,7 +112,8 @@ export default function Comments({ postId, canComment, canModerate }: Props) {
               <CommentInput
                 placeholder={t('comments.placeholder')}
                 submitLabel={t('comments.send')}
-                onSubmit={(text) => createComment(postId, text).then(reload)}
+                allowMedia
+                onSubmit={(text, media) => createComment(postId, text, media).then(reload)}
               />
             </div>
           )}
@@ -170,12 +180,17 @@ function CommentItem({ comment, depth, canReply, canModerate, currentUserId, onC
               }
             />
           ) : (
-            <div className="inline-block max-w-full rounded-2xl bg-slate-100 px-3 py-2">
-              <span className="text-sm font-semibold text-slate-900">{comment.authorName}</span>
-              <p className="whitespace-pre-wrap break-words text-sm text-slate-700">
-                {comment.content}
-              </p>
-            </div>
+            <>
+              <div className="inline-block max-w-full rounded-2xl bg-slate-100 px-3 py-2">
+                <span className="text-sm font-semibold text-slate-900">{comment.authorName}</span>
+                {comment.content && (
+                  <p className="whitespace-pre-wrap break-words text-sm text-slate-700">
+                    {comment.content}
+                  </p>
+                )}
+              </div>
+              <CommentMediaView media={comment.media} />
+            </>
           )}
 
           {!editing && (
@@ -237,11 +252,12 @@ function CommentItem({ comment, depth, canReply, canModerate, currentUserId, onC
               <CommentInput
                 placeholder={t('comments.replyPlaceholder')}
                 submitLabel={t('comments.send')}
+                allowMedia
                 autoFocus
                 onCancel={() => setReplying(false)}
-                onSubmit={(text) =>
+                onSubmit={(text, media) =>
                   // A válasz a komment azonosítójára érkezik (parentId).
-                  createComment(comment.postId, text, comment.id).then(() => {
+                  createComment(comment.postId, text, media, comment.id).then(() => {
                     setReplying(false)
                     setShowReplies(true)
                     return onChanged()
@@ -292,26 +308,40 @@ type InputProps = {
   placeholder: string
   submitLabel: string
   autoFocus?: boolean
-  onSubmit: (text: string) => Promise<unknown>
+  /** Ha igaz, kép/videó is csatolható (új hozzászólás/válasz; szerkesztésnél nem). */
+  allowMedia?: boolean
+  onSubmit: (text: string, media: PostMediaInput[]) => Promise<unknown>
   onCancel?: () => void
 }
 
-/** Apró szövegmező hozzászóláshoz / válaszhoz / szerkesztéshez (közös). */
-function CommentInput({ initial = '', placeholder, submitLabel, autoFocus, onSubmit, onCancel }: InputProps) {
+/** Apró szövegmező hozzászóláshoz / válaszhoz / szerkesztéshez, opcionális kép/videó csatolással. */
+function CommentInput({ initial = '', placeholder, submitLabel, autoFocus, allowMedia, onSubmit, onCancel }: InputProps) {
   const { t } = useTranslation()
   const [text, setText] = useState(initial)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const media = useMediaAttachments()
+  const imageInputRef = useRef<HTMLInputElement>(null)
+  const videoInputRef = useRef<HTMLInputElement>(null)
+
   const trimmed = text.trim()
+  const canSubmit = (trimmed.length > 0 || media.ready.length > 0) && !busy && !media.uploading
+
+  function onFilesSelected(e: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? [])
+    e.target.value = ''
+    void media.addFiles(files)
+  }
 
   async function submit(e: FormEvent) {
     e.preventDefault()
-    if (!trimmed || busy) return
+    if (!canSubmit) return
     setBusy(true)
     setError(null)
     try {
-      await onSubmit(trimmed)
+      await onSubmit(trimmed, media.mediaInputs)
       setText('')
+      media.reset()
     } catch (err) {
       setError(errorKey(err))
     } finally {
@@ -329,14 +359,46 @@ function CommentInput({ initial = '', placeholder, submitLabel, autoFocus, onSub
         placeholder={placeholder}
         className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none transition-colors placeholder:text-slate-400 focus:border-brand focus:bg-white"
       />
-      <div className="mt-1 flex items-center gap-2">
+
+      {allowMedia && <AttachmentGrid attachments={media.attachments} onRemove={media.removeAttachment} />}
+
+      {allowMedia && (
+        <>
+          <input ref={imageInputRef} type="file" accept={IMAGE_ACCEPT} multiple hidden onChange={onFilesSelected} />
+          <input ref={videoInputRef} type="file" accept={VIDEO_ACCEPT} hidden onChange={onFilesSelected} />
+        </>
+      )}
+
+      <div className="mt-1 flex flex-wrap items-center gap-2">
+        {allowMedia && (
+          <>
+            <button
+              type="button"
+              onClick={() => imageInputRef.current?.click()}
+              disabled={media.attachments.length >= MAX_MEDIA}
+              aria-label={t('composer.photo')}
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 disabled:opacity-50"
+            >
+              <ImagePlus className="h-4 w-4 text-brand" />
+            </button>
+            <button
+              type="button"
+              onClick={() => videoInputRef.current?.click()}
+              disabled={media.attachments.length >= MAX_MEDIA}
+              aria-label={t('composer.video')}
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 disabled:opacity-50"
+            >
+              <Video className="h-4 w-4 text-brand" />
+            </button>
+          </>
+        )}
         <button
           type="submit"
-          disabled={!trimmed || busy}
+          disabled={!canSubmit}
           className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1 text-sm font-semibold text-white transition-colors hover:bg-brand-dark disabled:opacity-60"
         >
-          {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-          {submitLabel}
+          {(busy || media.uploading) && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+          {media.uploading ? t('composer.uploading') : submitLabel}
         </button>
         {onCancel && (
           <button
@@ -347,12 +409,43 @@ function CommentInput({ initial = '', placeholder, submitLabel, autoFocus, onSub
             {t('comments.cancel')}
           </button>
         )}
-        {error && (
+        {(error || media.error) && (
           <span className="text-xs text-rose-600" role="alert">
-            {t(error)}
+            {t(error ?? media.error!)}
           </span>
         )}
       </div>
     </form>
+  )
+}
+
+/** A hozzászóláshoz csatolt média megjelenítése (képrács + beágyazott videó). */
+function CommentMediaView({ media }: { media: PostMedia[] }) {
+  if (media.length === 0) return null
+  const cols = media.length === 1 ? 'grid-cols-1' : 'grid-cols-2'
+  return (
+    <div className={`mt-1 grid max-w-md gap-2 ${cols}`}>
+      {media.map((m, i) =>
+        m.type === 'VIDEO' ? (
+          <video
+            key={i}
+            src={m.url}
+            controls
+            preload="metadata"
+            className="max-h-72 w-full rounded-xl border border-slate-200 bg-black"
+          />
+        ) : (
+          <a
+            key={i}
+            href={m.url}
+            target="_blank"
+            rel="noreferrer"
+            className="block overflow-hidden rounded-xl border border-slate-200"
+          >
+            <img src={m.url} alt="" loading="lazy" className="max-h-72 w-full object-cover" />
+          </a>
+        ),
+      )}
+    </div>
   )
 }

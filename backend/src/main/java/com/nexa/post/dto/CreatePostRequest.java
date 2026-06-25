@@ -1,10 +1,6 @@
 package com.nexa.post.dto;
 
-import com.nexa.post.MediaType;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 
 import java.util.List;
@@ -17,11 +13,4 @@ import java.util.List;
 public record CreatePostRequest(
         @Size(max = 5000) String content,
         @Size(max = 10) @Valid List<MediaItem> media) {
-
-    /** Egy feltöltött média hivatkozása a létrehozásnál. */
-    public record MediaItem(
-            @NotBlank String key,
-            @NotNull MediaType type,
-            @PositiveOrZero long sizeBytes) {
-    }
 }

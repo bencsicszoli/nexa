@@ -1,8 +1,11 @@
 package com.nexa.comment;
 
 import com.nexa.post.Post;
+import com.nexa.post.PostMedia;
 import com.nexa.user.User;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -10,9 +13,12 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -49,6 +55,12 @@ public class Comment {
     @Column(nullable = false, columnDefinition = "text")
     private String content;
 
+    /** A hozzászóláshoz csatolt média (kép/videó) a feltöltés sorrendjében; üres lehet. */
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "comment_media", joinColumns = @JoinColumn(name = "comment_id"))
+    @OrderColumn(name = "position")
+    private List<PostMedia> media = new ArrayList<>();
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
@@ -60,11 +72,14 @@ public class Comment {
         // JPA
     }
 
-    public Comment(Post post, User author, Comment parent, String content) {
+    public Comment(Post post, User author, Comment parent, String content, List<PostMedia> media) {
         this.post = post;
         this.author = author;
         this.parent = parent;
         this.content = content;
+        if (media != null) {
+            this.media = media;
+        }
     }
 
     public UUID getId() {
@@ -85,6 +100,10 @@ public class Comment {
 
     public String getContent() {
         return content;
+    }
+
+    public List<PostMedia> getMedia() {
+        return media;
     }
 
     public void edit(String content, Instant editedAt) {

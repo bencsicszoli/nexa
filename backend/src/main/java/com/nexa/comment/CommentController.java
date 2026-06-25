@@ -45,7 +45,7 @@ public class CommentController {
             @AuthenticationPrincipal UUID userId,
             @PathVariable UUID postId,
             @Valid @RequestBody CreateCommentRequest request) {
-        return commentService.create(userId, postId, request.content(), request.parentId());
+        return commentService.create(userId, postId, request.content(), request.media(), request.parentId());
     }
 
     /** Egy saját hozzászólás/válasz szerkesztése. */

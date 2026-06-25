@@ -148,6 +148,36 @@ class CommentFlowTest {
     }
 
     @Test
+    void commentCanCarryMediaAndMediaOnlyIsAllowed() throws Exception {
+        String authA = register("cm-ivy@example.com", "Ivy");
+        String postId = profilePost(authA, "Ivy bejegyzése");
+
+        // Szöveg nélküli, csak médiát tartalmazó hozzászólás is mehet.
+        mockMvc.perform(post("/api/posts/" + postId + "/comments")
+                        .header("Authorization", authA)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"content":"","media":[{"key":"posts/kep.jpg","type":"IMAGE","sizeBytes":1234}]}"""))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.media.length()").value(1))
+                .andExpect(jsonPath("$.media[0].type").value("IMAGE"))
+                .andExpect(jsonPath("$.media[0].url").value(org.hamcrest.Matchers.containsString("kep.jpg")));
+
+        // A komment-fában is visszajön a média.
+        mockMvc.perform(get("/api/posts/" + postId + "/comments").header("Authorization", authA))
+                .andExpect(jsonPath("$[0].media.length()").value(1));
+
+        // Nem a média-mappába mutató kulcs → INVALID_UPLOAD.
+        mockMvc.perform(post("/api/posts/" + postId + "/comments")
+                        .header("Authorization", authA)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"content":"x","media":[{"key":"hack/evil.jpg","type":"IMAGE","sizeBytes":1}]}"""))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_UPLOAD"));
+    }
+
+    @Test
     void onlyGroupMembersCanCommentOnGroupPost() throws Exception {
         String authA = register("cm-cara@example.com", "Cara");
         String authB = register("cm-dan@example.com", "Dan");

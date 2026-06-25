@@ -3,6 +3,7 @@ package com.nexa.post;
 import com.nexa.common.ApiException;
 import com.nexa.group.Group;
 import com.nexa.post.dto.CreatePostRequest;
+import com.nexa.post.dto.MediaItem;
 import com.nexa.post.dto.PostDto;
 import com.nexa.storage.DeferredStorageDeleter;
 import com.nexa.storage.PresignedUpload;
@@ -68,7 +69,7 @@ public class PostService {
         User author = userRepository.findById(authorId).orElseThrow(ApiException::userNotFound);
 
         String content = request.content() == null ? "" : request.content().trim();
-        List<PostMedia> media = toMedia(request.media());
+        List<PostMedia> media = resolveMedia(request.media());
 
         // A poszthoz legalább szöveg vagy egy média kell.
         if (content.isEmpty() && media.isEmpty()) {
@@ -79,12 +80,16 @@ public class PostService {
         return PostDto.from(post);
     }
 
-    private List<PostMedia> toMedia(List<CreatePostRequest.MediaItem> items) {
+    /**
+     * Feltöltött média-hivatkozások átalakítása tárolt {@link PostMedia} metaadattá (publikus URL +
+     * típus + méret). Csak a poszt-média mappába ({@value #MEDIA_PREFIX}/) mutató kulcsot fogad el.
+     * Posztok és hozzászólások (lásd {@code CommentService}) közös média-feloldója.
+     */
+    public List<PostMedia> resolveMedia(List<MediaItem> items) {
         if (items == null || items.isEmpty()) {
             return List.of();
         }
         return items.stream().map(item -> {
-            // Csak a poszt-média mappába mutató kulcsot fogadunk el (nem tetszőleges objektum).
             if (item.key() == null || !item.key().startsWith(MEDIA_PREFIX + "/")) {
                 throw ApiException.invalidUpload();
             }
