@@ -11,6 +11,12 @@ export default defineConfig({
         target: 'http://localhost:8080',
         changeOrigin: true,
       },
+      // WebSocket/STOMP a valós idejű értesítéshez (#11) — a /ws kézfogás is a 8080-ra megy.
+      '/ws': {
+        target: 'http://localhost:8080',
+        ws: true,
+        changeOrigin: true,
+      },
     },
   },
 })

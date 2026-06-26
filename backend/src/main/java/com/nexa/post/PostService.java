@@ -5,6 +5,7 @@ import com.nexa.group.Group;
 import com.nexa.post.dto.CreatePostRequest;
 import com.nexa.post.dto.MediaItem;
 import com.nexa.post.dto.PostDto;
+import com.nexa.realtime.NotificationService;
 import com.nexa.storage.DeferredStorageDeleter;
 import com.nexa.storage.PresignedUpload;
 import com.nexa.storage.StorageService;
@@ -36,13 +37,16 @@ public class PostService {
     private final UserRepository userRepository;
     private final StorageService storageService;
     private final DeferredStorageDeleter storageDeleter;
+    private final NotificationService notificationService;
 
     public PostService(PostRepository postRepository, UserRepository userRepository,
-                       StorageService storageService, DeferredStorageDeleter storageDeleter) {
+                       StorageService storageService, DeferredStorageDeleter storageDeleter,
+                       NotificationService notificationService) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.storageService = storageService;
         this.storageDeleter = storageDeleter;
+        this.notificationService = notificationService;
     }
 
     /** Aláírt média-feltöltési cél; csak engedélyezett kép/videó típust enged. */
@@ -77,6 +81,8 @@ public class PostService {
         }
 
         Post post = postRepository.save(new Post(author, content, media, group));
+        // Valós idejű értesítés a kapcsolatoknak/csoporttagoknak (#11) — push a commit után.
+        notificationService.notifyNewPost(post);
         return PostDto.from(post);
     }
 

@@ -34,4 +34,8 @@ public interface FollowRepository extends JpaRepository<Follow, UUID> {
     /** Akiket a felhasználó követ — csak az id-k, a hírfolyam-aggregációhoz (#10). */
     @Query("select f.followee.id from Follow f where f.follower.id = :userId")
     List<UUID> findFolloweeIds(@Param("userId") UUID userId);
+
+    /** Akik a felhasználót követik — csak az id-k, a valós idejű értesítés fan-outjához (#11). */
+    @Query("select f.follower.id from Follow f where f.followee.id = :userId")
+    List<UUID> findFollowerIds(@Param("userId") UUID userId);
 }

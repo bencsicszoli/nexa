@@ -6,6 +6,7 @@ import PostComposer from '../components/PostComposer'
 import PostCard from '../components/PostCard'
 import { errorKey } from '../auth/errorKey'
 import { getFeed } from '../feed/feedApi'
+import { FEED_REFRESH_EVENT } from '../notifications/feedRefresh'
 import type { Post } from '../posts/types'
 
 export default function FeedPage() {
@@ -49,6 +50,13 @@ export default function FeedPage() {
       active = false
     }
   }, [])
+
+  // Valós idejű értesítésre kattintva (#11) frissül a hírfolyam: az első lap újratöltődik,
+  // így az új bejegyzés időrendben felül megjelenik.
+  useEffect(() => {
+    window.addEventListener(FEED_REFRESH_EVENT, loadFirstPage)
+    return () => window.removeEventListener(FEED_REFRESH_EVENT, loadFirstPage)
+  }, [loadFirstPage])
 
   // A következő lap hozzáfűzése a cursorral (keyset-lapozás).
   async function loadMore() {

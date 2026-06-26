@@ -172,6 +172,13 @@
     "error": "Couldn't load your feed.",
     "retry": "Try again"
   },
+  "notifications": {
+    "newPost": "{{name}} shared a new post",
+    "newGroupPost": "{{name}} posted in {{group}}",
+    "clickToRefresh": "Click to refresh your feed",
+    "empty": "No new notifications",
+    "dismiss": "Dismiss"
+  },
   "userProfile": {
     "postsBy": "Posts by {{name}}",
     "noPosts": "This user hasn't posted anything public yet.",

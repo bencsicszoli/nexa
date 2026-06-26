@@ -54,6 +54,9 @@ public class SecurityConfig {
                         // Médiakiszolgálás publikus; a feltöltést az aláírt token védi (#4 lokál tároló).
                         .requestMatchers(HttpMethod.GET, "/api/media/**").permitAll()
                         .requestMatchers(HttpMethod.PUT, "/api/storage/upload").permitAll()
+                        // WebSocket-kézfogás (#11): a STOMP CONNECT keretet a token védi
+                        // (StompAuthChannelInterceptor), nem ez a HTTP-szűrő.
+                        .requestMatchers("/ws/**").permitAll()
                         // minden más (köztük a GET /api/auth/me) hitelesítést igényel
                         .anyRequest().authenticated())
                 .exceptionHandling(eh -> eh.authenticationEntryPoint((request, response, ex) -> {

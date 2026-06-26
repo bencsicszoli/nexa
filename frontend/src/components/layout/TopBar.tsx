@@ -1,8 +1,9 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { Bell, Home, Menu, MessageCircle, Search } from 'lucide-react'
+import { Home, Menu, MessageCircle, Search } from 'lucide-react'
 import LanguageSwitcher from '../LanguageSwitcher'
 import UserMenu from './UserMenu'
+import NotificationBell from '../NotificationBell'
 
 type TopBarProps = {
   /** Mobil bal-navigáció (drawer) megnyitása. */
@@ -59,16 +60,7 @@ export default function TopBar({ onOpenMenu }: TopBarProps) {
           >
             <MessageCircle className="h-5 w-5" />
           </button>
-          <button
-            type="button"
-            className="relative rounded-full p-2 text-slate-600 hover:bg-slate-100"
-            aria-label={t('topbar.notifications')}
-          >
-            <Bell className="h-5 w-5" />
-            <span className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
-              3
-            </span>
-          </button>
+          <NotificationBell />
 
           <div className="mx-1 hidden sm:block">
             <LanguageSwitcher />

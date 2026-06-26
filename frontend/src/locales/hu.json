@@ -172,6 +172,13 @@
     "error": "Nem sikerült betölteni a hírfolyamot.",
     "retry": "Újrapróbálom"
   },
+  "notifications": {
+    "newPost": "{{name}} új bejegyzést tett közzé",
+    "newGroupPost": "{{name}} bejegyzést tett közzé a(z) {{group}} csoportba",
+    "clickToRefresh": "Kattints a hírfolyam frissítéséhez",
+    "empty": "Nincs új értesítés",
+    "dismiss": "Bezárás"
+  },
   "userProfile": {
     "postsBy": "{{name}} bejegyzései",
     "noPosts": "Ez a felhasználó még nem írt nyilvános bejegyzést.",
