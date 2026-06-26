@@ -94,6 +94,31 @@ public class FriendService {
         friendshipRepository.delete(friendship);
     }
 
+    /**
+     * A hívó és egy másik felhasználó közötti kapcsolatállapot a publikus profil
+     * kapcsolat-gombjához. A {@code status} ugyanazt a sémát követi, mint a böngészés
+     * ({@code NONE} / {@code FRIENDS} / {@code REQUEST_SENT} / {@code REQUEST_RECEIVED});
+     * a {@code requestId} csak függő kérésnél van kitöltve (elfogadáshoz / visszavonáshoz).
+     * A hívót önmagával nem hívjuk ezzel (azt a {@code UserService} külön kezeli).
+     */
+    @Transactional(readOnly = true)
+    public RelationshipView relationshipWith(UUID viewerId, UUID targetId) {
+        return friendshipRepository.findBetween(viewerId, targetId)
+                .map(rel -> {
+                    if (rel.getStatus() == FriendshipStatus.ACCEPTED) {
+                        return new RelationshipView("FRIENDS", null);
+                    }
+                    String status = rel.getRequester().getId().equals(viewerId)
+                            ? "REQUEST_SENT" : "REQUEST_RECEIVED";
+                    return new RelationshipView(status, rel.getId().toString());
+                })
+                .orElse(new RelationshipView("NONE", null));
+    }
+
+    /** A hívóhoz viszonyított ismerősi állapot (státusz + a függő kérés azonosítója). */
+    public record RelationshipView(String status, String requestId) {
+    }
+
     /** A bejelentkezett felhasználó elfogadott ismerősei (legutóbb elfogadott felül). */
     @Transactional(readOnly = true)
     public List<FriendDto> listFriends(UUID userId) {

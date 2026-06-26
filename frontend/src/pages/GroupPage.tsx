@@ -5,7 +5,6 @@ import {
   ArrowLeft,
   Check,
   Clock,
-  FolderKanban,
   Globe,
   Loader2,
   Lock,
@@ -15,6 +14,7 @@ import {
   X,
 } from 'lucide-react'
 import Avatar from '../components/Avatar'
+import GroupLogo from '../components/GroupLogo'
 import PostCard from '../components/PostCard'
 import PostComposer from '../components/PostComposer'
 import { useAuth } from '../auth/AuthContext'
@@ -160,9 +160,7 @@ export default function GroupPage() {
 
       <header className="rounded-2xl border border-slate-200 bg-white p-6">
         <div className="flex items-start gap-4">
-          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-brand/10 text-brand">
-            <FolderKanban className="h-7 w-7" />
-          </span>
+          <GroupLogo name={group.name} logoUrl={group.logoUrl} size="lg" className="h-14 w-14 text-xl" />
           <div className="min-w-0 flex-1">
             <h1 className="text-lg font-semibold text-slate-900">{group.name}</h1>
             <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-sm text-slate-500">
@@ -206,8 +204,13 @@ export default function GroupPage() {
           <ul className="mt-3 flex flex-wrap gap-3">
             {members.map((m) => (
               <li key={m.id} className="flex items-center gap-2 rounded-full border border-slate-200 py-1 pl-1 pr-2">
-                <Avatar name={m.displayName} src={m.avatarUrl} size="sm" />
-                <span className="text-sm text-slate-700">{m.displayName}</span>
+                <Link
+                  to={`/users/${m.id}`}
+                  className="flex min-w-0 items-center gap-2 transition-opacity hover:opacity-80"
+                >
+                  <Avatar name={m.displayName} src={m.avatarUrl} size="sm" />
+                  <span className="truncate text-sm text-slate-700">{m.displayName}</span>
+                </Link>
                 {m.role === 'ADMIN' && (
                   <span className="rounded-full bg-brand/10 px-1.5 text-[11px] font-semibold text-brand">
                     {t('groups.adminBadge')}
@@ -239,10 +242,15 @@ export default function GroupPage() {
             <ul className="mt-3 flex flex-col gap-2">
               {requests.map((r) => (
                 <li key={r.userId} className="flex items-center gap-3 rounded-xl border border-slate-200 px-3 py-2">
-                  <Avatar name={r.displayName} src={r.avatarUrl} size="sm" />
-                  <span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-800">
-                    {r.displayName}
-                  </span>
+                  <Link
+                    to={`/users/${r.userId}`}
+                    className="flex min-w-0 flex-1 items-center gap-3 transition-opacity hover:opacity-80"
+                  >
+                    <Avatar name={r.displayName} src={r.avatarUrl} size="sm" />
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-800">
+                      {r.displayName}
+                    </span>
+                  </Link>
                   <button
                     type="button"
                     disabled={actionId === r.userId}

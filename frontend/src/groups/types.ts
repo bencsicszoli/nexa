@@ -11,6 +11,8 @@ export type Group = {
   id: string
   name: string
   description: string | null
+  /** A feltöltött logó URL-je; null esetén a frontend monogramot mutat. */
+  logoUrl: string | null
   visibility: GroupVisibility
   memberCount: number
   /** A hívó szerepe; null = nem tag. */

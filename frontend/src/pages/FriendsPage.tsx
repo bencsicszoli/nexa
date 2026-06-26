@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router-dom'
 import { Check, Loader2, Rss, Search, UserMinus, UserPlus, X } from 'lucide-react'
 import Avatar from '../components/Avatar'
 import { errorKey } from '../auth/errorKey'
@@ -219,22 +220,25 @@ export default function FriendsPage() {
   )
 }
 
-/** Egy sor egy felhasználóval (avatar + név + bio) — a jobb oldali gombokat a hívó adja. */
+/** Egy sor egy felhasználóval (avatar + név + bio) — a jobb oldali gombokat a hívó adja.
+ *  {@code userId} esetén az avatar + név a felhasználó profiljára mutató link. */
 function PersonItem({
   name,
   avatarUrl,
   bio,
   meta,
+  userId,
   children,
 }: {
   name: string
   avatarUrl: string | null
   bio: string | null
   meta?: string
+  userId?: string
   children: React.ReactNode
 }) {
-  return (
-    <li className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
+  const content = (
+    <>
       <Avatar name={name} src={avatarUrl} size="lg" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold text-slate-900">{name}</p>
@@ -244,6 +248,20 @@ function PersonItem({
           <p className="truncate text-xs text-slate-400">{meta}</p>
         ) : null}
       </div>
+    </>
+  )
+  return (
+    <li className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
+      {userId ? (
+        <Link
+          to={`/users/${userId}`}
+          className="flex min-w-0 flex-1 items-center gap-3 transition-opacity hover:opacity-80"
+        >
+          {content}
+        </Link>
+      ) : (
+        <div className="flex min-w-0 flex-1 items-center gap-3">{content}</div>
+      )}
       <div className="flex shrink-0 items-center gap-2">{children}</div>
     </li>
   )
@@ -270,6 +288,7 @@ function FriendsList({
       {friends.map((f) => (
         <PersonItem
           key={f.id}
+          userId={f.id}
           name={f.displayName}
           avatarUrl={f.avatarUrl}
           bio={f.bio}
@@ -323,7 +342,7 @@ function RequestsList({
         ) : (
           <ul className="flex flex-col gap-2">
             {incoming.map((r) => (
-              <PersonItem key={r.requestId} name={r.displayName} avatarUrl={r.avatarUrl} bio={r.bio}>
+              <PersonItem key={r.requestId} userId={r.userId} name={r.displayName} avatarUrl={r.avatarUrl} bio={r.bio}>
                 <button
                   type="button"
                   disabled={busyId === r.requestId}
@@ -361,6 +380,7 @@ function RequestsList({
             {outgoing.map((r) => (
               <PersonItem
                 key={r.requestId}
+                userId={r.userId}
                 name={r.displayName}
                 avatarUrl={r.avatarUrl}
                 bio={r.bio}
@@ -443,7 +463,7 @@ function PeopleList({
             const isFollowing = followingIds.has(p.id)
             const followBusy = followBusyId === p.id
             return (
-              <PersonItem key={p.id} name={p.displayName} avatarUrl={p.avatarUrl} bio={p.bio}>
+              <PersonItem key={p.id} userId={p.id} name={p.displayName} avatarUrl={p.avatarUrl} bio={p.bio}>
                 <button
                   type="button"
                   disabled={followBusy}

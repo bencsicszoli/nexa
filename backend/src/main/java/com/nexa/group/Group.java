@@ -38,6 +38,14 @@ public class Group {
     private String description;
 
     /**
+     * A csoport logójának publikus URL-je az objektumtárolóban, vagy {@code null}, ha nincs
+     * feltöltve — ekkor a frontend a névből képzett monogramot mutatja. Ugyanaz a presigned-URL
+     * minta, mint az avatarnál (lásd {@code ProfileService}).
+     */
+    @Column(name = "logo_url", length = 512)
+    private String logoUrl;
+
+    /**
      * Láthatóság / csatlakozási mód. A {@code default 'PUBLIC'} azért kell, hogy a már
      * létező (e mező bevezetése előtti) csoportsorok is érvényes értéket kapjanak az
      * automatikus séma-frissítéskor.
@@ -83,6 +91,14 @@ public class Group {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getLogoUrl() {
+        return logoUrl;
+    }
+
+    public void setLogoUrl(String logoUrl) {
+        this.logoUrl = logoUrl;
     }
 
     public GroupVisibility getVisibility() {

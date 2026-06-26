@@ -38,15 +38,43 @@ export function getGroupMembers(groupId: string): Promise<GroupMember[]> {
   return apiFetch<GroupMember[]>(`/groups/${groupId}/members`)
 }
 
-/** Új csoport létrehozása (a létrehozó admin lesz). */
+/** A tárolótól kapott aláírt logó-feltöltési cél. */
+export type LogoUploadTarget = {
+  uploadUrl: string
+  key: string
+}
+
+/** Aláírt feltöltési cél kérése a csoport logójához (a létrehozás előtt). */
+export function requestGroupLogoUploadUrl(contentType: string): Promise<LogoUploadTarget> {
+  return apiFetch<LogoUploadTarget>('/groups/logo/upload-url', {
+    method: 'POST',
+    body: { contentType },
+  })
+}
+
+/**
+ * A logófájl feltöltése közvetlenül az aláírt URL-re (lokálnál a backend, R2-nél az
+ * objektumtároló). Nem az apiFetch-en megy: nincs JWT és nincs JSON.
+ */
+export async function uploadGroupLogoFile(uploadUrl: string, file: Blob): Promise<void> {
+  const res = await fetch(uploadUrl, {
+    method: 'PUT',
+    headers: { 'Content-Type': file.type },
+    body: file,
+  })
+  if (!res.ok) throw new Error(`Group logo upload failed: ${res.status}`)
+}
+
+/** Új csoport létrehozása (a létrehozó admin lesz). Opcionális, már feltöltött logó kulccsal. */
 export async function createGroup(
   name: string,
   description: string,
   visibility: GroupVisibility,
+  logoKey?: string | null,
 ): Promise<Group> {
   const group = await apiFetch<Group>('/groups', {
     method: 'POST',
-    body: { name, description, visibility },
+    body: { name, description, visibility, logoKey: logoKey ?? null },
   })
   emitGroupsChanged()
   return group

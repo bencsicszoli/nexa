@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { Check, Clock, FolderKanban, Globe, Loader2, Lock, LogOut, Plus, Search, Users } from 'lucide-react'
+import { Camera, Check, Clock, Globe, Loader2, Lock, LogOut, Plus, Search, Users, X } from 'lucide-react'
+import AvatarCropper from '../components/AvatarCropper'
+import GroupLogo from '../components/GroupLogo'
 import { errorKey } from '../auth/errorKey'
 import {
   browseGroups,
@@ -9,8 +11,13 @@ import {
   getMyGroups,
   joinGroup,
   leaveGroup,
+  requestGroupLogoUploadUrl,
+  uploadGroupLogoFile,
 } from '../groups/groupsApi'
 import type { Group, GroupVisibility } from '../groups/types'
+
+const ALLOWED_LOGO_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+const LOGO_MAX_BYTES = 5 * 1024 * 1024
 
 type Tab = 'mine' | 'discover'
 
@@ -36,6 +43,49 @@ export default function GroupsPage() {
   const [description, setDescription] = useState('')
   const [visibility, setVisibility] = useState<GroupVisibility>('PUBLIC')
   const [submitting, setSubmitting] = useState(false)
+  // Logó: a kivágott kép (feltöltés a létrehozáskor) + előnézeti URL + a kivágandó fájl.
+  const [logoBlob, setLogoBlob] = useState<Blob | null>(null)
+  const [logoPreview, setLogoPreview] = useState<string | null>(null)
+  const [pendingLogo, setPendingLogo] = useState<File | null>(null)
+  const logoInput = useRef<HTMLInputElement>(null)
+
+  // A létrehozó űrlap (és a logó-előnézet) visszaállítása.
+  function resetCreateForm() {
+    setName('')
+    setDescription('')
+    setVisibility('PUBLIC')
+    setLogoBlob(null)
+    setLogoPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev)
+      return null
+    })
+  }
+
+  function onPickLogo(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = '' // ugyanaz a fájl újra kiválasztható legyen
+    if (!file) return
+    setFeedback(null)
+    if (!ALLOWED_LOGO_TYPES.includes(file.type)) {
+      setFeedback({ kind: 'error', key: 'auth.error.UNSUPPORTED_IMAGE_TYPE' })
+      return
+    }
+    if (file.size > LOGO_MAX_BYTES) {
+      setFeedback({ kind: 'error', key: 'auth.error.PAYLOAD_TOO_LARGE' })
+      return
+    }
+    setPendingLogo(file)
+  }
+
+  // A kivágóból kapott négyzetes kép eltárolása előnézettel (feltöltés a létrehozáskor).
+  function onLogoCropped(blob: Blob) {
+    setPendingLogo(null)
+    setLogoBlob(blob)
+    setLogoPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev)
+      return URL.createObjectURL(blob)
+    })
+  }
 
   const loadMine = useCallback(async () => {
     setMine(await getMyGroups())
@@ -77,10 +127,15 @@ export default function GroupsPage() {
     setSubmitting(true)
     setFeedback(null)
     try {
-      await createGroup(trimmed, description.trim(), visibility)
-      setName('')
-      setDescription('')
-      setVisibility('PUBLIC')
+      // Logó feltöltése (ha van) a csoport létrehozása előtt — presigned URL-re.
+      let logoKey: string | undefined
+      if (logoBlob) {
+        const target = await requestGroupLogoUploadUrl('image/jpeg')
+        await uploadGroupLogoFile(target.uploadUrl, new File([logoBlob], 'logo.jpg', { type: 'image/jpeg' }))
+        logoKey = target.key
+      }
+      await createGroup(trimmed, description.trim(), visibility, logoKey)
+      resetCreateForm()
       setCreating(false)
       await loadMine()
       setTab('mine')
@@ -144,6 +199,46 @@ export default function GroupsPage() {
 
         {creating && (
           <form onSubmit={onCreate} className="mt-4 flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+            {/* Logó (opcionális) — kör-előnézet, a profilkép-feltöltéshez hasonlóan */}
+            <div className="flex items-center gap-4">
+              <GroupLogo name={name || '?'} logoUrl={logoPreview} size="lg" className="h-16 w-16 text-xl" />
+              <div className="flex flex-col gap-1.5">
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => logoInput.current?.click()}
+                    className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+                  >
+                    <Camera className="h-4 w-4" />
+                    {t('groups.logoUpload')}
+                  </button>
+                  {logoPreview && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLogoBlob(null)
+                        setLogoPreview((prev) => {
+                          if (prev) URL.revokeObjectURL(prev)
+                          return null
+                        })
+                      }}
+                      className="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-100"
+                    >
+                      <X className="h-4 w-4" />
+                      {t('groups.logoRemove')}
+                    </button>
+                  )}
+                </div>
+                <span className="text-xs text-slate-400">{t('groups.logoHint')}</span>
+              </div>
+              <input
+                ref={logoInput}
+                type="file"
+                accept={ALLOWED_LOGO_TYPES.join(',')}
+                onChange={onPickLogo}
+                className="hidden"
+              />
+            </div>
             <label className="flex flex-col gap-1">
               <span className="text-sm font-medium text-slate-700">{t('groups.nameLabel')}</span>
               <input
@@ -296,6 +391,14 @@ export default function GroupsPage() {
           )}
         </div>
       )}
+
+      {pendingLogo && (
+        <AvatarCropper
+          file={pendingLogo}
+          onCancel={() => setPendingLogo(null)}
+          onConfirm={onLogoCropped}
+        />
+      )}
     </div>
   )
 }
@@ -335,9 +438,7 @@ function GroupRow({
         to={`/groups/${group.id}`}
         className="flex min-w-0 flex-1 items-center gap-3 group"
       >
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand">
-          <FolderKanban className="h-5 w-5" />
-        </span>
+        <GroupLogo name={group.name} logoUrl={group.logoUrl} size="lg" className="h-11 w-11" />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-slate-900 group-hover:text-brand">
             {group.name}

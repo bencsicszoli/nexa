@@ -61,10 +61,14 @@ export default function RightSidebar() {
         ) : (
           <>
             {friends.slice(0, FRIENDS_PREVIEW).map((f) => (
-              <div key={f.id} className="flex items-center gap-3">
+              <NavLink
+                key={f.id}
+                to={`/users/${f.id}`}
+                className="flex items-center gap-3 transition-opacity hover:opacity-80"
+              >
                 <Avatar name={f.displayName} src={f.avatarUrl} size="sm" />
-                <span className="truncate text-sm text-slate-700">{f.displayName}</span>
-              </div>
+                <span className="truncate text-sm text-slate-700 hover:text-brand">{f.displayName}</span>
+              </NavLink>
             ))}
             {friends.length > FRIENDS_PREVIEW && (
               <NavLink to="/friends" className="text-xs font-medium text-brand hover:underline">

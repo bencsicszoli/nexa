@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router-dom'
 import { Loader2, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import Avatar from './Avatar'
+import GroupLogo from './GroupLogo'
 import Comments from './Comments'
 import { useAuth } from '../auth/AuthContext'
 import { errorKey } from '../auth/errorKey'
@@ -69,6 +71,12 @@ type Props = {
   isGroupPost?: boolean
   /** Csoport-admin-e a néző — a csoport-poszt hozzászólásainak moderálásához. */
   isGroupAdmin?: boolean
+  /**
+   * Ha igaz és a bejegyzés csoporthoz tartozik, a fejléc jobb felső sarkában megjelenik a
+   * forráscsoport logója (a csoportra mutató linkkel) — a hírfolyamban használjuk, ahol vegyesen
+   * jönnek a profil- és csoportposztok. A csoportoldalon felesleges (ott minden poszt a csoporté).
+   */
+  showGroupBadge?: boolean
 }
 
 export default function PostCard({
@@ -80,6 +88,7 @@ export default function PostCard({
   canComment = true,
   isGroupPost = false,
   isGroupAdmin = false,
+  showGroupBadge = false,
 }: Props) {
   const { t, i18n } = useTranslation()
   const { user } = useAuth()
@@ -155,9 +164,16 @@ export default function PostCard({
   return (
     <article className="rounded-2xl border border-slate-200 bg-white p-4">
       <header className="flex items-center gap-3">
-        <Avatar name={post.authorName} src={post.authorAvatarUrl} size="md" />
-        <div className="flex flex-col">
-          <span className="text-sm font-semibold text-slate-900">{post.authorName}</span>
+        <Link to={`/users/${post.authorId}`} className="shrink-0">
+          <Avatar name={post.authorName} src={post.authorAvatarUrl} size="md" />
+        </Link>
+        <div className="flex min-w-0 flex-col">
+          <Link
+            to={`/users/${post.authorId}`}
+            className="w-fit truncate text-sm font-semibold text-slate-900 transition-colors hover:text-brand hover:underline"
+          >
+            {post.authorName}
+          </Link>
           <time
             dateTime={post.createdAt}
             title={new Date(post.createdAt).toLocaleString(i18n.language)}
@@ -167,50 +183,63 @@ export default function PostCard({
           </time>
         </div>
 
-        {showMenu && !editing && (
-          <div className="relative ml-auto" ref={menuRef}>
-            <button
-              type="button"
-              onClick={() => setMenuOpen((v) => !v)}
-              aria-label={t('posts.menu')}
-              aria-haspopup="menu"
-              aria-expanded={menuOpen}
-              className="flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100"
+        <div className="ml-auto flex items-center gap-2">
+          {showGroupBadge && post.group && (
+            <Link
+              to={`/groups/${post.group.id}`}
+              title={post.group.name}
+              aria-label={t('posts.inGroup', { name: post.group.name })}
+              className="transition-opacity hover:opacity-80"
             >
-              <MoreHorizontal className="h-5 w-5" />
-            </button>
-            {menuOpen && (
-              <div
-                role="menu"
-                className="absolute right-0 top-9 z-10 w-40 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg"
+              <GroupLogo name={post.group.name} logoUrl={post.group.logoUrl} size="sm" />
+            </Link>
+          )}
+
+          {showMenu && !editing && (
+            <div className="relative" ref={menuRef}>
+              <button
+                type="button"
+                onClick={() => setMenuOpen((v) => !v)}
+                aria-label={t('posts.menu')}
+                aria-haspopup="menu"
+                aria-expanded={menuOpen}
+                className="flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100"
               >
-                {editable && (
+                <MoreHorizontal className="h-5 w-5" />
+              </button>
+              {menuOpen && (
+                <div
+                  role="menu"
+                  className="absolute right-0 top-9 z-10 w-40 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg"
+                >
+                  {editable && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={startEdit}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
+                    >
+                      <Pencil className="h-4 w-4" />
+                      {t('posts.edit')}
+                    </button>
+                  )}
                   <button
                     type="button"
                     role="menuitem"
-                    onClick={startEdit}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
+                    onClick={() => {
+                      setConfirmingDelete(true)
+                      setMenuOpen(false)
+                    }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-50"
                   >
-                    <Pencil className="h-4 w-4" />
-                    {t('posts.edit')}
+                    <Trash2 className="h-4 w-4" />
+                    {t('posts.delete')}
                   </button>
-                )}
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={() => {
-                    setConfirmingDelete(true)
-                    setMenuOpen(false)
-                  }}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-50"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  {t('posts.delete')}
-                </button>
-              </div>
-            )}
-          </div>
-        )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </header>
 
       {editing ? (

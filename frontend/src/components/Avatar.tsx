@@ -3,6 +3,8 @@ type AvatarProps = {
   name: string
   /** Ha van feltöltött avatar-kép, ennek az URL-jét jelenítjük meg a monogram helyett. */
   src?: string | null
+  /** Felülírja a névből számított monogramot (pl. csoport-logó helyőrzője — lásd GroupLogo). */
+  initials?: string
   size?: 'sm' | 'md' | 'lg'
   className?: string
 }
@@ -32,14 +34,14 @@ function colorFor(name: string): string {
   return PALETTE[Math.abs(hash) % PALETTE.length]
 }
 
-function initials(name: string): string {
+function monogramOf(name: string): string {
   const parts = name.trim().split(/\s+/)
   const first = parts[0]?.[0] ?? ''
   const last = parts.length > 1 ? parts[parts.length - 1][0] : ''
   return (first + last).toUpperCase()
 }
 
-export default function Avatar({ name, src, size = 'md', className = '' }: AvatarProps) {
+export default function Avatar({ name, src, initials, size = 'md', className = '' }: AvatarProps) {
   if (src) {
     return (
       <img
@@ -56,7 +58,7 @@ export default function Avatar({ name, src, size = 'md', className = '' }: Avata
       )} ${SIZES[size]} ${className}`}
       aria-hidden="true"
     >
-      {initials(name)}
+      {initials ?? monogramOf(name)}
     </span>
   )
 }

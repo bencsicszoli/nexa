@@ -41,6 +41,7 @@
     "myPosts": "Bejegyzéseim",
     "empty": "Még nem írtál semmit. Oszd meg az első bejegyzésed fent.",
     "menu": "Bejegyzés műveletei",
+    "inGroup": "{{name}} csoportban",
     "edit": "Szerkesztés",
     "delete": "Törlés",
     "save": "Mentés",
@@ -123,6 +124,9 @@
     "create": "Csoport létrehozása",
     "creating": "Létrehozás…",
     "cancel": "Mégse",
+    "logoUpload": "Logó feltöltése",
+    "logoRemove": "Eltávolítás",
+    "logoHint": "Opcionális. Ha nincs, a névből képzett monogram jelenik meg.",
     "nameLabel": "Csoport neve",
     "namePlaceholder": "pl. Fotósok köre",
     "descriptionLabel": "Leírás (opcionális)",
@@ -162,7 +166,22 @@
   },
   "feed": {
     "emptyTitle": "Még üres a hírfolyamod",
-    "emptySubtitle": "Itt jelennek meg majd időrendben az ismerőseid, a követett alkotók és a csoportjaid bejegyzései — legfrissebb felül."
+    "emptySubtitle": "Itt jelennek meg majd időrendben az ismerőseid, a követett alkotók és a csoportjaid bejegyzései — legfrissebb felül.",
+    "loadMore": "Több betöltése",
+    "loadingMore": "Betöltés…",
+    "error": "Nem sikerült betölteni a hírfolyamot.",
+    "retry": "Újrapróbálom"
+  },
+  "userProfile": {
+    "postsBy": "{{name}} bejegyzései",
+    "noPosts": "Ez a felhasználó még nem írt nyilvános bejegyzést.",
+    "addFriend": "Ismerősnek jelölés",
+    "friends": "Ismerős",
+    "requestSent": "Kérés elküldve",
+    "acceptRequest": "Elfogadás",
+    "rejectRequest": "Elutasítás",
+    "follow": "Követés",
+    "following": "Követed"
   },
   "right": {
     "newPostToast": "{{name}} új bejegyzést töltött fel",

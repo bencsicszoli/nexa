@@ -10,6 +10,8 @@ import com.nexa.post.PostRepository;
 import com.nexa.post.PostService;
 import com.nexa.post.dto.CreatePostRequest;
 import com.nexa.post.dto.PostDto;
+import com.nexa.storage.PresignedUpload;
+import com.nexa.storage.StorageService;
 import com.nexa.user.User;
 import com.nexa.user.UserRepository;
 import org.springframework.data.domain.PageRequest;
@@ -36,33 +38,67 @@ public class GroupService {
     /** A böngészés egy lapjának felső korlátja (a teljes kereső a #16). */
     private static final int BROWSE_LIMIT = 50;
 
+    /** A csoport-logók logikai mappája a tárolóban. */
+    private static final String LOGO_PREFIX = "group-logos";
+    private static final Set<String> ALLOWED_LOGO_TYPES =
+            Set.of("image/jpeg", "image/png", "image/webp", "image/gif");
+
     private final GroupRepository groupRepository;
     private final GroupMemberRepository memberRepository;
     private final GroupJoinRequestRepository joinRequestRepository;
     private final UserRepository userRepository;
     private final PostRepository postRepository;
     private final PostService postService;
+    private final StorageService storageService;
 
     public GroupService(GroupRepository groupRepository, GroupMemberRepository memberRepository,
                         GroupJoinRequestRepository joinRequestRepository, UserRepository userRepository,
-                        PostRepository postRepository, PostService postService) {
+                        PostRepository postRepository, PostService postService,
+                        StorageService storageService) {
         this.groupRepository = groupRepository;
         this.memberRepository = memberRepository;
         this.joinRequestRepository = joinRequestRepository;
         this.userRepository = userRepository;
         this.postRepository = postRepository;
         this.postService = postService;
+        this.storageService = storageService;
     }
 
-    /** Csoport létrehozása; a létrehozó azonnal admin tag lesz. */
+    /** Aláírt logó-feltöltési cél a csoport-létrehozó űrlaphoz; csak képtípust enged. */
+    public PresignedUpload createLogoUpload(String contentType) {
+        String normalized = contentType == null ? "" : contentType.trim().toLowerCase();
+        if (!ALLOWED_LOGO_TYPES.contains(normalized)) {
+            throw ApiException.unsupportedImageType();
+        }
+        return storageService.createUpload(LOGO_PREFIX, normalized);
+    }
+
+    /** Csoport létrehozása; a létrehozó azonnal admin tag lesz. Opcionális feltöltött logóval. */
     @Transactional
     public GroupDto create(UUID userId, CreateGroupRequest request) {
         User creator = userRepository.findById(userId).orElseThrow(ApiException::userNotFound);
-        Group group = groupRepository.save(new Group(
+        Group group = new Group(
                 request.name().trim(), trimToNull(request.description()),
-                request.visibilityOrDefault(), creator));
+                request.visibilityOrDefault(), creator);
+        group.setLogoUrl(resolveLogoUrl(request.logoKey()));
+        groupRepository.save(group);
         memberRepository.save(new GroupMember(group, creator, GroupRole.ADMIN));
         return GroupDto.of(group, GroupRole.ADMIN, 1, false, 0);
+    }
+
+    /**
+     * A feltöltött logó kulcsát publikus URL-lé oldja fel; csak a logó-mappába
+     * ({@value #LOGO_PREFIX}/) mutató kulcsot fogad el. Üres/hiányzó kulcsnál {@code null}
+     * (a csoport monogramos helyőrzőt kap).
+     */
+    private String resolveLogoUrl(String logoKey) {
+        if (logoKey == null || logoKey.isBlank()) {
+            return null;
+        }
+        if (!logoKey.startsWith(LOGO_PREFIX + "/")) {
+            throw ApiException.invalidUpload();
+        }
+        return storageService.publicUrl(logoKey);
     }
 
     /**

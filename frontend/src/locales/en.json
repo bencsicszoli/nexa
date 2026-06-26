@@ -41,6 +41,7 @@
     "myPosts": "My posts",
     "empty": "You haven't posted anything yet. Share your first post above.",
     "menu": "Post actions",
+    "inGroup": "In {{name}}",
     "edit": "Edit",
     "delete": "Delete",
     "save": "Save",
@@ -122,6 +123,9 @@
     },
     "create": "Create group",
     "creating": "Creating…",
+    "logoUpload": "Upload logo",
+    "logoRemove": "Remove",
+    "logoHint": "Optional. If left empty, a monogram from the name is shown.",
     "cancel": "Cancel",
     "nameLabel": "Group name",
     "namePlaceholder": "e.g. Photographers' circle",
@@ -162,7 +166,22 @@
   },
   "feed": {
     "emptyTitle": "Your feed is empty",
-    "emptySubtitle": "Posts from your friends, followed creators and groups will appear here in chronological order — newest first."
+    "emptySubtitle": "Posts from your friends, followed creators and groups will appear here in chronological order — newest first.",
+    "loadMore": "Load more",
+    "loadingMore": "Loading…",
+    "error": "Couldn't load your feed.",
+    "retry": "Try again"
+  },
+  "userProfile": {
+    "postsBy": "Posts by {{name}}",
+    "noPosts": "This user hasn't posted anything public yet.",
+    "addFriend": "Add friend",
+    "friends": "Friends",
+    "requestSent": "Request sent",
+    "acceptRequest": "Accept",
+    "rejectRequest": "Decline",
+    "follow": "Follow",
+    "following": "Following"
   },
   "right": {
     "newPostToast": "{{name}} shared a new post",

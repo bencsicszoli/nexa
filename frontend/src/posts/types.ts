@@ -9,6 +9,13 @@ export type PostMedia = {
   sizeBytes: number
 }
 
+/** A bejegyzés forráscsoportja (csak csoportposztnál) — a hírfolyam-jelöléshez. */
+export type PostGroup = {
+  id: string
+  name: string
+  logoUrl: string | null
+}
+
 export type Post = {
   id: string
   authorId: string
@@ -16,5 +23,7 @@ export type Post = {
   authorAvatarUrl: string | null
   content: string
   media: PostMedia[]
+  /** Kitöltve, ha a bejegyzés egy csoporthoz tartozik; profilposztnál null. */
+  group: PostGroup | null
   createdAt: string
 }

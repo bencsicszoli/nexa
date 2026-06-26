@@ -28,6 +28,10 @@ public interface GroupMemberRepository extends JpaRepository<GroupMember, UUID> 
     /** A felhasználó összes tagsága (a böngészésnél a szerep gyors kikereséséhez). */
     List<GroupMember> findByUserId(UUID userId);
 
+    /** A felhasználó tag-csoportjainak id-ja — a hírfolyam-aggregációhoz (#10). */
+    @Query("select gm.group.id from GroupMember gm where gm.user.id = :userId")
+    List<UUID> findGroupIdsByUserId(@Param("userId") UUID userId);
+
     /**
      * A megadott csoportok taglétszáma egy lekérdezésben (N+1 nélkül, a böngészéshez).
      * Minden sor: {@code [groupId, count]}.

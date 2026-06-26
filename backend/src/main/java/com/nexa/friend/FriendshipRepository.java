@@ -42,4 +42,16 @@ public interface FriendshipRepository extends JpaRepository<Friendship, UUID> {
 
     /** A felhasználó által elküldött, függőben lévő kérések (legfrissebb felül). */
     List<Friendship> findByRequesterIdAndStatusOrderByCreatedAtDesc(UUID requesterId, FriendshipStatus status);
+
+    /**
+     * A felhasználó elfogadott ismerőseinek id-ja (a „másik fél", iránytól függetlenül) —
+     * a hírfolyam-aggregációhoz (#10). Csak id-t ad vissza, így nincs felesleges entitásbetöltés.
+     */
+    @Query("""
+            select case when f.requester.id = :userId then f.addressee.id else f.requester.id end
+            from Friendship f
+            where f.status = com.nexa.friend.FriendshipStatus.ACCEPTED
+              and (f.requester.id = :userId or f.addressee.id = :userId)
+            """)
+    List<UUID> findAcceptedFriendIds(@Param("userId") UUID userId);
 }

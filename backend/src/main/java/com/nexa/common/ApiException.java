@@ -187,4 +187,12 @@ public class ApiException extends RuntimeException {
         return new ApiException(HttpStatus.BAD_REQUEST, "INVALID_COMMENT_PARENT",
                 "The parent comment does not belong to this post.");
     }
+
+    // --- Hírfolyam (#10) ---
+
+    /** A lapozási cursor formátuma érvénytelen (sérült vagy nem tőlünk származó érték). */
+    public static ApiException invalidCursor() {
+        return new ApiException(HttpStatus.BAD_REQUEST, "INVALID_CURSOR",
+                "The pagination cursor is invalid.");
+    }
 }

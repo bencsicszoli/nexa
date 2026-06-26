@@ -3,9 +3,11 @@ package com.nexa.group;
 import com.nexa.group.dto.CreateGroupRequest;
 import com.nexa.group.dto.GroupDto;
 import com.nexa.group.dto.GroupJoinRequestDto;
+import com.nexa.group.dto.GroupLogoUploadRequest;
 import com.nexa.group.dto.GroupMemberDto;
 import com.nexa.post.dto.CreatePostRequest;
 import com.nexa.post.dto.PostDto;
+import com.nexa.storage.PresignedUpload;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -44,6 +46,12 @@ public class GroupController {
             @AuthenticationPrincipal UUID userId,
             @Valid @RequestBody CreateGroupRequest request) {
         return groupService.create(userId, request);
+    }
+
+    /** Aláírt feltöltési cél a csoport logójához (a létrehozás előtt). */
+    @PostMapping("/logo/upload-url")
+    public PresignedUpload logoUploadUrl(@Valid @RequestBody GroupLogoUploadRequest request) {
+        return groupService.createLogoUpload(request.contentType());
     }
 
     /** Csoportok böngészése a hívó tagsági szerepével (csatlakozáshoz). */

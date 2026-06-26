@@ -26,6 +26,11 @@ export function getMyPosts(): Promise<Post[]> {
   return apiFetch<Post[]>('/posts/me')
 }
 
+/** Egy adott felhasználó bejegyzései (más profiljának megtekintéséhez), legfrissebb felül. */
+export function getUserPosts(userId: string): Promise<Post[]> {
+  return apiFetch<Post[]>(`/posts/user/${userId}`)
+}
+
 /** Egy saját bejegyzés szövegének szerkesztése (a média változatlan). */
 export function updatePost(id: string, content: string): Promise<Post> {
   return apiFetch<Post>(`/posts/${id}`, { method: 'PATCH', body: { content } })

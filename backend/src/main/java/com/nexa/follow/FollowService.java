@@ -49,6 +49,12 @@ public class FollowService {
                 .ifPresent(followRepository::delete);
     }
 
+    /** Követi-e a hívó az adott felhasználót (a publikus profil kapcsolat-gombjához). */
+    @Transactional(readOnly = true)
+    public boolean isFollowing(UUID followerId, UUID followeeId) {
+        return followRepository.existsByFollowerIdAndFolloweeId(followerId, followeeId);
+    }
+
     /** Akiket a bejelentkezett felhasználó követ (legfrissebb felül). */
     @Transactional(readOnly = true)
     public List<FollowUserDto> listFollowing(UUID userId) {
