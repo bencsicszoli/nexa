@@ -14,6 +14,7 @@
     "friends": "Friends",
     "following": "Following",
     "groups": "Groups",
+    "messages": "Messages",
     "profile": "My profile",
     "media": "Media library",
     "settings": "Settings",
@@ -188,7 +189,25 @@
     "acceptRequest": "Accept",
     "rejectRequest": "Decline",
     "follow": "Follow",
-    "following": "Following"
+    "following": "Following",
+    "message": "Message"
+  },
+  "chat": {
+    "title": "Messages",
+    "empty": "No conversations yet. Start one from a profile or a group.",
+    "selectConversation": "Select a conversation to open it.",
+    "backToList": "Back to conversations",
+    "noMessages": "No messages in this conversation yet.",
+    "noMessagesYet": "No messages yet",
+    "messagePlaceholder": "Write a message…",
+    "send": "Send",
+    "online": "Online",
+    "offline": "Offline",
+    "groupChat": "Group chat",
+    "typing": "Typing…",
+    "typingNamed": "{{name}} is typing…",
+    "loadOlder": "Older messages",
+    "loadingOlder": "Loading…"
   },
   "right": {
     "newPostToast": "{{name}} shared a new post",

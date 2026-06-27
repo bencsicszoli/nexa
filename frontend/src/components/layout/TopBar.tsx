@@ -4,6 +4,7 @@ import { Home, Menu, MessageCircle, Search } from 'lucide-react'
 import LanguageSwitcher from '../LanguageSwitcher'
 import UserMenu from './UserMenu'
 import NotificationBell from '../NotificationBell'
+import { useChat } from '../../chat/ChatContext'
 
 type TopBarProps = {
   /** Mobil bal-navigáció (drawer) megnyitása. */
@@ -12,6 +13,7 @@ type TopBarProps = {
 
 export default function TopBar({ onOpenMenu }: TopBarProps) {
   const { t } = useTranslation()
+  const { totalUnread } = useChat()
 
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white">
@@ -53,13 +55,18 @@ export default function TopBar({ onOpenMenu }: TopBarProps) {
           >
             <Home className="h-5 w-5" />
           </button>
-          <button
-            type="button"
-            className="rounded-full p-2 text-slate-600 hover:bg-slate-100"
+          <Link
+            to="/messages"
+            className="relative rounded-full p-2 text-slate-600 hover:bg-slate-100"
             aria-label={t('topbar.messages')}
           >
             <MessageCircle className="h-5 w-5" />
-          </button>
+            {totalUnread > 0 && (
+              <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
+                {totalUnread > 99 ? '99+' : totalUnread}
+              </span>
+            )}
+          </Link>
           <NotificationBell />
 
           <div className="mx-1 hidden sm:block">

@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Navigate, useParams } from 'react-router-dom'
-import { Check, Clock, Loader2, UserCheck, UserPlus, UserX } from 'lucide-react'
+import { Navigate, useNavigate, useParams } from 'react-router-dom'
+import { Check, Clock, Loader2, MessageCircle, UserCheck, UserPlus, UserX } from 'lucide-react'
 import Avatar from '../components/Avatar'
 import PostCard from '../components/PostCard'
 import { useAuth } from '../auth/AuthContext'
+import { useChat } from '../chat/ChatContext'
 import { errorKey } from '../auth/errorKey'
 import { acceptRequest, removeFriend, removeRequest, sendFriendRequest } from '../friends/friendsApi'
 import { followUser, unfollowUser } from '../follow/followApi'
@@ -113,6 +114,7 @@ export default function UserProfilePage() {
         <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">
           <FriendAction profile={profile} busy={actionBusy} run={runAction} />
           <FollowAction profile={profile} busy={actionBusy} run={runAction} />
+          <MessageAction userId={profile.id} />
           {actionError && (
             <span className="text-sm text-rose-600" role="alert">
               {t(actionError)}
@@ -206,6 +208,31 @@ function FriendAction({
         </button>
       )
   }
+}
+
+/** „Üzenet" gomb: megnyitja (vagy létrehozza) a kétszemélyes szálat, és a csevegésre navigál. */
+function MessageAction({ userId }: { userId: string }) {
+  const { t } = useTranslation()
+  const navigate = useNavigate()
+  const { openDirect } = useChat()
+  const [busy, setBusy] = useState(false)
+
+  const open = async () => {
+    setBusy(true)
+    try {
+      const conversation = await openDirect(userId)
+      navigate(`/messages/${conversation.id}`)
+    } catch {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <button type="button" disabled={busy} onClick={open} className={OUTLINE}>
+      {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageCircle className="h-4 w-4" />}
+      {t('userProfile.message')}
+    </button>
+  )
 }
 
 /** A követés gombja (egyirányú, az ismerősségtől független). */

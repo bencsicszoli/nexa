@@ -14,6 +14,7 @@
     "friends": "Ismerősök",
     "following": "Követés",
     "groups": "Csoportok",
+    "messages": "Üzenetek",
     "profile": "Profilom",
     "media": "Médiatár",
     "settings": "Beállítások",
@@ -188,7 +189,25 @@
     "acceptRequest": "Elfogadás",
     "rejectRequest": "Elutasítás",
     "follow": "Követés",
-    "following": "Követed"
+    "following": "Követed",
+    "message": "Üzenet"
+  },
+  "chat": {
+    "title": "Üzenetek",
+    "empty": "Még nincs beszélgetésed. Indíts egyet egy profilról vagy egy csoportból.",
+    "selectConversation": "Válassz egy beszélgetést a megnyitáshoz.",
+    "backToList": "Vissza a beszélgetésekhez",
+    "noMessages": "Még nincs üzenet ebben a beszélgetésben.",
+    "noMessagesYet": "Még nincs üzenet",
+    "messagePlaceholder": "Írj üzenetet…",
+    "send": "Küldés",
+    "online": "Online",
+    "offline": "Offline",
+    "groupChat": "Csoport-csevegés",
+    "typing": "Gépel…",
+    "typingNamed": "{{name}} gépel…",
+    "loadOlder": "Régebbi üzenetek",
+    "loadingOlder": "Betöltés…"
   },
   "right": {
     "newPostToast": "{{name}} új bejegyzést töltött fel",

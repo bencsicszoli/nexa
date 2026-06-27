@@ -6,7 +6,9 @@ import TopBar from './TopBar'
 import LeftNav from './LeftNav'
 import RightSidebar from './RightSidebar'
 import { FriendNotificationsProvider } from '../../friends/FriendNotificationsContext'
+import { StompProvider } from '../../realtime/StompProvider'
 import { NotificationsProvider } from '../../notifications/NotificationsContext'
+import { ChatProvider } from '../../chat/ChatContext'
 import NotificationToaster from '../NotificationToaster'
 
 // Az "A" (3 oszlopos) elrendezés: bal navigáció · középső tartalom · jobb sáv.
@@ -19,7 +21,9 @@ export default function AppShell() {
 
   return (
     <FriendNotificationsProvider>
+    <StompProvider>
     <NotificationsProvider>
+    <ChatProvider>
     <div className="min-h-screen bg-slate-100 text-slate-900">
       <TopBar onOpenMenu={() => setMenuOpen(true)} />
 
@@ -72,7 +76,9 @@ export default function AppShell() {
       {/* Valós idejű értesítés toastja (#11) */}
       <NotificationToaster />
     </div>
+    </ChatProvider>
     </NotificationsProvider>
+    </StompProvider>
     </FriendNotificationsProvider>
   )
 }

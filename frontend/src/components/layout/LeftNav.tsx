@@ -5,6 +5,7 @@ import {
   FolderKanban,
   Image as ImageIcon,
   type LucideIcon,
+  MessageCircle,
   Rss,
   Settings,
   User,
@@ -12,6 +13,7 @@ import {
   Users,
 } from 'lucide-react'
 import { useFriendNotifications } from '../../friends/FriendNotificationsContext'
+import { useChat } from '../../chat/ChatContext'
 import { AUTH_LOGOUT_EVENT } from '../../lib/api'
 import { GROUPS_CHANGED_EVENT, getMyGroups } from '../../groups/groupsApi'
 import type { Group } from '../../groups/types'
@@ -27,6 +29,7 @@ const PRIMARY: NavItem[] = [
   { to: '/friends', labelKey: 'nav.friends', icon: Users },
   { to: '/following', labelKey: 'nav.following', icon: UserRoundPlus },
   { to: '/groups', labelKey: 'nav.groups', icon: FolderKanban },
+  { to: '/messages', labelKey: 'nav.messages', icon: MessageCircle },
   { to: '/profile', labelKey: 'nav.profile', icon: User },
   { to: '/media', labelKey: 'nav.media', icon: ImageIcon },
   { to: '/settings', labelKey: 'nav.settings', icon: Settings },
@@ -40,6 +43,7 @@ type LeftNavProps = {
 export default function LeftNav({ onNavigate }: LeftNavProps) {
   const { t } = useTranslation()
   const { unseenCount } = useFriendNotifications()
+  const { totalUnread } = useChat()
 
   // A felhasználó csoportjai a „Csoportjaim" szekcióhoz. Best-effort: hibát itt nem mutatunk
   // (a /groups oldal igen). Csatlakozás/kilépés/létrehozás után a GROUPS_CHANGED_EVENT frissít.
@@ -75,8 +79,9 @@ export default function LeftNav({ onNavigate }: LeftNavProps) {
   return (
     <nav className="flex flex-col gap-1" aria-label={t('nav.feed')}>
       {PRIMARY.map(({ to, labelKey, icon: Icon }) => {
-        // Az „Ismerősök" mellett a megtekintetlen kérések száma (badge); 0-nál nincs jelzés.
-        const badge = to === '/friends' ? unseenCount : 0
+        // Badge: az „Ismerősök" mellett a megtekintetlen kérések, az „Üzenetek" mellett az
+        // olvasatlan üzenetek száma; 0-nál nincs jelzés.
+        const badge = to === '/friends' ? unseenCount : to === '/messages' ? totalUnread : 0
         return (
           <NavLink key={to} to={to} end={to === '/'} className={linkClass} onClick={onNavigate}>
             <Icon className="h-5 w-5 shrink-0" />

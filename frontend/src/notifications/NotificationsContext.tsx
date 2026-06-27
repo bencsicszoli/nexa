@@ -4,24 +4,17 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
   type ReactNode,
 } from 'react'
-import { Client } from '@stomp/stompjs'
-import { useAuth } from '../auth/AuthContext'
-import { getAccessToken } from '../auth/tokenStore'
+import { useStomp } from '../realtime/StompProvider'
 import type { NexaNotification } from './types'
 
 /**
- * A valós idejű értesítés (#11) kliensoldali állapota. Bejelentkezett felhasználónál egy
- * STOMP-kapcsolatot tart fenn a backenddel (a Vite proxyn át a `/ws`-re), és feliratkozik
- * a saját értesítéseire (`/user/queue/notifications`). Ha egy kapcsolat új tartalmat tölt
- * fel, az értesítés azonnal megjelenik — toastként és a fejléc harang-jelvényén.
- *
- * A kapcsolat hitelesítése a STOMP CONNECT `Authorization: Bearer <token>` fejlécével
- * történik (a böngésző a WebSocket-kézfogásnál nem tud fejlécet küldeni). Újracsatlakozáskor
- * a `beforeConnect` mindig a friss access tokent teszi be.
+ * A valós idejű értesítés (#11) kliensoldali állapota. A megosztott STOMP-kapcsolaton
+ * ({@link useStomp}) feliratkozik a saját értesítéseire (`/user/queue/notifications`): ha egy
+ * kapcsolat új tartalmat tölt fel, az értesítés azonnal megjelenik — toastként és a fejléc
+ * harang-jelvényén. A kapcsolat felépítését/hitelesítését a {@link StompProvider} intézi.
  */
 type NotificationsValue = {
   /** A kapott értesítések, legfrissebb elöl (korlátozott számban megtartva). */
@@ -43,11 +36,8 @@ const MAX_NOTIFICATIONS = 30
 /** A toast automatikus elrejtésének ideje (ms). */
 const TOAST_TIMEOUT_MS = 8000
 
-const WS_URL = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws`
-
 export function NotificationsProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth()
-  const userId = user?.id ?? null
+  const { subscribe } = useStomp()
 
   const [notifications, setNotifications] = useState<NexaNotification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
@@ -60,45 +50,20 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     return () => window.clearTimeout(timer)
   }, [toast])
 
-  // STOMP-kapcsolat felépítése/bontása a bejelentkezett felhasználóhoz kötve.
-  const clientRef = useRef<Client | null>(null)
+  // Feliratkozás a saját értesítésekre a megosztott STOMP-kapcsolaton.
   useEffect(() => {
-    if (!userId) return
-
-    const client = new Client({
-      brokerURL: WS_URL,
-      // Minden (újra)csatlakozás előtt a friss access tokent tesszük a CONNECT fejlécbe.
-      beforeConnect: () => {
-        const token = getAccessToken()
-        client.connectHeaders = token ? { Authorization: `Bearer ${token}` } : {}
-      },
-      reconnectDelay: 5000,
-      onConnect: () => {
-        client.subscribe('/user/queue/notifications', (frame) => {
-          try {
-            const dto = JSON.parse(frame.body) as NexaNotification
-            setNotifications((prev) => [dto, ...prev].slice(0, MAX_NOTIFICATIONS))
-            setUnreadCount((c) => c + 1)
-            setToast(dto)
-          } catch {
-            // Hibás keret esetén nem teszünk semmit — az értesítés csak kényelmi jelzés.
-          }
-        })
-      },
+    const unsubscribe = subscribe('/user/queue/notifications', (frame) => {
+      try {
+        const dto = JSON.parse(frame.body) as NexaNotification
+        setNotifications((prev) => [dto, ...prev].slice(0, MAX_NOTIFICATIONS))
+        setUnreadCount((c) => c + 1)
+        setToast(dto)
+      } catch {
+        // Hibás keret esetén nem teszünk semmit — az értesítés csak kényelmi jelzés.
+      }
     })
-
-    client.activate()
-    clientRef.current = client
-
-    return () => {
-      clientRef.current = null
-      // A deactivate aszinkron lebontja a kapcsolatot; a kijelentkezést/újratöltést is ez kezeli.
-      void client.deactivate()
-      setNotifications([])
-      setUnreadCount(0)
-      setToast(null)
-    }
-  }, [userId])
+    return unsubscribe
+  }, [subscribe])
 
   const markAllRead = useCallback(() => setUnreadCount(0), [])
   const dismissToast = useCallback(() => setToast(null), [])

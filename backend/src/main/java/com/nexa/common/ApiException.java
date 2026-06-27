@@ -195,4 +195,24 @@ public class ApiException extends RuntimeException {
         return new ApiException(HttpStatus.BAD_REQUEST, "INVALID_CURSOR",
                 "The pagination cursor is invalid.");
     }
+
+    // --- Csevegés (#12) ---
+
+    /** Saját magával nem indíthat kétszemélyes beszélgetést. */
+    public static ApiException selfConversation() {
+        return new ApiException(HttpStatus.BAD_REQUEST, "SELF_CONVERSATION",
+                "You cannot start a conversation with yourself.");
+    }
+
+    /** Nem létező, vagy a hívó számára nem elérhető beszélgetés (a létezést sem szivárogtatjuk). */
+    public static ApiException conversationNotFound() {
+        return new ApiException(HttpStatus.NOT_FOUND, "CONVERSATION_NOT_FOUND",
+                "Conversation not found.");
+    }
+
+    /** Üres üzenet-szöveg nem küldhető. */
+    public static ApiException emptyMessage() {
+        return new ApiException(HttpStatus.BAD_REQUEST, "EMPTY_MESSAGE",
+                "A message cannot be empty.");
+    }
 }

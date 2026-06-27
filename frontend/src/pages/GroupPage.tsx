@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeft,
   Check,
@@ -9,6 +9,7 @@ import {
   Loader2,
   Lock,
   LogOut,
+  MessageCircle,
   UserX,
   Users,
   X,
@@ -18,6 +19,7 @@ import GroupLogo from '../components/GroupLogo'
 import PostCard from '../components/PostCard'
 import PostComposer from '../components/PostComposer'
 import { useAuth } from '../auth/AuthContext'
+import { useChat } from '../chat/ChatContext'
 import { errorKey } from '../auth/errorKey'
 import {
   approveJoinRequest,
@@ -37,7 +39,10 @@ import type { Post } from '../posts/types'
 export default function GroupPage() {
   const { t } = useTranslation()
   const { user } = useAuth()
+  const navigate = useNavigate()
+  const { openGroup } = useChat()
   const { groupId } = useParams<{ groupId: string }>()
+  const [openingChat, setOpeningChat] = useState(false)
 
   const [group, setGroup] = useState<Group | null>(null)
   const [members, setMembers] = useState<GroupMember[]>([])
@@ -181,19 +186,44 @@ export default function GroupPage() {
               </p>
             )}
           </div>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={onToggleMembership}
-            className={`inline-flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors disabled:opacity-60 ${
-              action.outline
-                ? 'border border-slate-200 text-slate-600 hover:bg-slate-100'
-                : 'bg-brand text-white hover:bg-brand-dark'
-            }`}
-          >
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <action.Icon className="h-4 w-4" />}
-            {action.label}
-          </button>
+          <div className="flex shrink-0 flex-col gap-2">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={onToggleMembership}
+              className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors disabled:opacity-60 ${
+                action.outline
+                  ? 'border border-slate-200 text-slate-600 hover:bg-slate-100'
+                  : 'bg-brand text-white hover:bg-brand-dark'
+              }`}
+            >
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <action.Icon className="h-4 w-4" />}
+              {action.label}
+            </button>
+            {isMember && (
+              <button
+                type="button"
+                disabled={openingChat}
+                onClick={async () => {
+                  setOpeningChat(true)
+                  try {
+                    const conversation = await openGroup(group.id)
+                    navigate(`/messages/${conversation.id}`)
+                  } catch {
+                    setOpeningChat(false)
+                  }
+                }}
+                className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 disabled:opacity-60"
+              >
+                {openingChat ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <MessageCircle className="h-4 w-4" />
+                )}
+                {t('chat.groupChat')}
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Tagok */}
