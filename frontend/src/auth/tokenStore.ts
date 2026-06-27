@@ -25,3 +25,30 @@ export function clearTokens(): void {
   localStorage.removeItem(ACCESS_KEY)
   localStorage.removeItem(REFRESH_KEY)
 }
+
+/** Az access JWT lejárati ideje epoch-ms-ben, vagy null, ha nem dekódolható. */
+function accessTokenExpiry(): number | null {
+  const token = getAccessToken()
+  if (!token) return null
+  try {
+    const payload = token.split('.')[1]
+    const json = atob(payload.replace(/-/g, '+').replace(/_/g, '/'))
+    const exp = JSON.parse(json).exp
+    return typeof exp === 'number' ? exp * 1000 : null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Igaz, ha nincs access token, vagy a meglévő a megadott időablakon belül lejár (vagy már lejárt).
+ * A STOMP-kapcsolat ezzel dönti el, hogy (újra)csatlakozás előtt frissítse-e a tokent. Ha a lejárat
+ * nem dekódolható (null), nem erőltetünk frissítést (false) — a normál apiFetch-folyam úgyis kezeli.
+ */
+export function accessTokenExpiringWithin(ms: number): boolean {
+  const token = getAccessToken()
+  if (!token) return true
+  const exp = accessTokenExpiry()
+  if (exp === null) return false
+  return Date.now() >= exp - ms
+}

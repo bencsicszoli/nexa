@@ -31,10 +31,12 @@ function emitLogout(): void {
   window.dispatchEvent(new Event(AUTH_LOGOUT_EVENT))
 }
 
-// Egyszerre csak egy refresh fusson; a párhuzamos 401-ek ugyanarra a promise-ra várnak.
+// Egyszerre csak egy refresh fusson; a párhuzamos 401-ek (és a WS beforeConnect) ugyanarra a
+// promise-ra várnak. Exportált, hogy a STOMP-kapcsolat (StompProvider) is friss access tokennel
+// tudjon (újra)csatlakozni — különben egy lejárt token után a realtime-csatorna nem épülne újra.
 let refreshInFlight: Promise<boolean> | null = null
 
-async function refreshTokens(): Promise<boolean> {
+export async function refreshTokens(): Promise<boolean> {
   const refreshToken = getRefreshToken()
   if (!refreshToken) return false
 

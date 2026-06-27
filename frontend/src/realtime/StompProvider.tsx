@@ -10,7 +10,8 @@ import {
 } from 'react'
 import { Client, type IMessage, type StompSubscription } from '@stomp/stompjs'
 import { useAuth } from '../auth/AuthContext'
-import { getAccessToken } from '../auth/tokenStore'
+import { accessTokenExpiringWithin, getAccessToken } from '../auth/tokenStore'
+import { refreshTokens } from '../lib/api'
 
 /**
  * Egyetlen, megosztott STOMP-kapcsolat a bejelentkezett felhasználóhoz (#11 + #12). Korábban
@@ -19,9 +20,12 @@ import { getAccessToken } from '../auth/tokenStore'
  * `subscribe`/`publish` API-ját használja.
  *
  * A kapcsolat hitelesítése a STOMP CONNECT `Authorization: Bearer <token>` fejlécével történik
- * (a böngésző a WebSocket-kézfogásnál nem tud fejlécet küldeni); újracsatlakozáskor a
- * `beforeConnect` mindig a friss access tokent teszi be. A feliratkozásokat a provider tartja
- * nyilván, és minden (újra)csatlakozáskor automatikusan helyreállítja őket.
+ * (a böngésző a WebSocket-kézfogásnál nem tud fejlécet küldeni). A `beforeConnect` minden
+ * (újra)csatlakozás előtt fut: ha az access token lejárt vagy hamarosan lejár, előbb **frissíti**
+ * (az `apiFetch` single-flight refresh-ét újrahasználva), és csak utána teszi a friss tokent a
+ * fejlécbe. Enélkül egy 15 perces lejárat utáni reconnect (hálózati szünet, alvás, szerver-restart)
+ * lejárt tokennel próbálkozna a végtelenségig, és a realtime-csatorna (értesítés + chat) elnémulna.
+ * A feliratkozásokat a provider tartja nyilván, és minden (újra)csatlakozáskor helyreállítja őket.
  */
 type MessageHandler = (message: IMessage) => void
 
@@ -59,7 +63,13 @@ export function StompProvider({ children }: { children: ReactNode }) {
 
     const client = new Client({
       brokerURL: WS_URL,
-      beforeConnect: () => {
+      // Async: lejárt/hamarosan lejáró access tokent (újra)csatlakozás előtt frissítünk, hogy a
+      // CONNECT mindig érvényes tokent kapjon. Refresh-bukásnál a (lejárt) tokennel próbálkozunk —
+      // a kijelentkeztetést úgyis a normál apiFetch-folyam intézi.
+      beforeConnect: async () => {
+        if (accessTokenExpiringWithin(30_000)) {
+          await refreshTokens()
+        }
         const token = getAccessToken()
         client.connectHeaders = token ? { Authorization: `Bearer ${token}` } : {}
       },
