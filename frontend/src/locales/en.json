@@ -210,12 +210,12 @@
     "loadingOlder": "Loading…"
   },
   "right": {
-    "newPostToast": "{{name}} shared a new post",
-    "newPostHint": "Click to refresh your feed",
     "friends": "Friends",
     "noFriends": "You don't have any friends yet.",
     "seeAllFriends": "See all {{count}}",
-    "followedCreators": "Followed creators",
+    "following": "Following",
+    "noFollowing": "You're not following anyone yet.",
+    "seeAllFollowing": "See all {{count}}",
     "premiumTitle": "Nexa Premium",
     "premiumDesc": "An ad-free experience.",
     "premiumTrial": "{{days}} days left in your trial.",

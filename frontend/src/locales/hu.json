@@ -210,12 +210,12 @@
     "loadingOlder": "Betöltés…"
   },
   "right": {
-    "newPostToast": "{{name}} új bejegyzést töltött fel",
-    "newPostHint": "Kattints a hírfolyam frissítéséhez",
     "friends": "Ismerősök",
     "noFriends": "Még nincsenek ismerőseid.",
     "seeAllFriends": "Mind a(z) {{count}} megtekintése",
-    "followedCreators": "Követett alkotók",
+    "following": "Követések",
+    "noFollowing": "Még senkit sem követsz.",
+    "seeAllFollowing": "Mind a(z) {{count}} megtekintése",
     "premiumTitle": "Nexa Premium",
     "premiumDesc": "Reklámmentes élmény.",
     "premiumTrial": "A próbaidőből még {{days}} nap van hátra.",

@@ -41,6 +41,16 @@ export default function ChatThread({ conversationId }: { conversationId: string 
 
   const bottomRef = useRef<HTMLDivElement | null>(null)
   const lastTypingSentRef = useRef(0)
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null)
+
+  // A küldődoboz a tartalomhoz nő (a CSS max-h-32-ig, utána görget); küldés után
+  // a kiürült draft visszaállítja egysorosra.
+  useEffect(() => {
+    const el = textareaRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${el.scrollHeight}px`
+  }, [draft])
 
   // A listából frissített fejléc (online-pötty, cím) — a REST-fejléc a tartalék.
   const fromList = conversations.find((c) => c.id === conversationId)
@@ -113,13 +123,26 @@ export default function ChatThread({ conversationId }: { conversationId: string 
     }
   }
 
-  const submit = (event: React.FormEvent) => {
-    event.preventDefault()
+  const sendNow = () => {
     const text = draft.trim()
     if (!text) return
     sendMessage(conversationId, text)
     setDraft('')
     lastTypingSentRef.current = 0
+  }
+
+  const submit = (event: React.FormEvent) => {
+    event.preventDefault()
+    sendNow()
+  }
+
+  // Enter küld; Shift+Enter új sort kezd. (IME-kompozíció közben — pl. ékezetes
+  // bevitel — ne küldjünk, hagyjuk a böngészőre az Entert.)
+  const onKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
+      event.preventDefault()
+      sendNow()
+    }
   }
 
   const typing = typingByConversation[conversationId]
@@ -221,13 +244,15 @@ export default function ChatThread({ conversationId }: { conversationId: string 
       )}
 
       {/* Küldődoboz */}
-      <form onSubmit={submit} className="flex items-center gap-2 border-t border-slate-200 p-3">
-        <input
-          type="text"
+      <form onSubmit={submit} className="flex items-end gap-2 border-t border-slate-200 p-3">
+        <textarea
+          ref={textareaRef}
           value={draft}
           onChange={(e) => onDraftChange(e.target.value)}
+          onKeyDown={onKeyDown}
           placeholder={t('chat.messagePlaceholder')}
-          className="min-w-0 flex-1 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm outline-none transition-colors placeholder:text-slate-400 focus:border-brand focus:bg-white"
+          rows={1}
+          className="max-h-32 min-h-[40px] min-w-0 flex-1 resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm outline-none transition-colors placeholder:text-slate-400 focus:border-brand focus:bg-white"
           maxLength={4000}
         />
         <button

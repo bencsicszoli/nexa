@@ -1,20 +1,15 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NavLink } from 'react-router-dom'
-import { Sparkles, X } from 'lucide-react'
+import { Sparkles } from 'lucide-react'
 import Avatar from '../Avatar'
 import { getFriends } from '../../friends/friendsApi'
 import type { Friend } from '../../friends/types'
+import { getFollowing } from '../../follow/followApi'
+import type { FollowUser } from '../../follow/types'
 
-// A jobb oldali sávban legfeljebb ennyi ismerőst mutatunk (a teljes lista a /friends oldalon).
-const FRIENDS_PREVIEW = 6
-
-// Placeholder adat — a valódi tartalmat a hátralévő kártyák töltik fel (#8 követés,
-// #11 értesítés, #14 előfizetés).
-const CREATORS = [
-  { name: 'Tech Híradó', meta: 'napi 3 poszt' },
-  { name: 'Könyvklub', meta: 'heti összefoglaló' },
-]
+// A jobb oldali sávban legfeljebb ennyi elemet mutatunk (a teljes lista a /friends, ill. /following oldalon).
+const LIST_PREVIEW = 6
 
 function ListCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -29,13 +24,19 @@ export default function RightSidebar() {
   const { t } = useTranslation()
 
   const [friends, setFriends] = useState<Friend[]>([])
+  const [following, setFollowing] = useState<FollowUser[]>([])
 
   useEffect(() => {
     let active = true
-    // Best-effort: a jobb sáv csak előnézet, hibát itt nem jelzünk (a /friends oldal igen).
+    // Best-effort: a jobb sáv csak előnézet, hibát itt nem jelzünk (a /friends, /following oldal igen).
     getFriends()
       .then((list) => {
         if (active) setFriends(list)
+      })
+      .catch(() => {})
+    getFollowing()
+      .then((list) => {
+        if (active) setFollowing(list)
       })
       .catch(() => {})
     return () => {
@@ -45,22 +46,12 @@ export default function RightSidebar() {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Valós idejű értesítés-előnézet (statikus váz; élővé a #11 kártya teszi) */}
-      <div className="flex items-start gap-3 rounded-2xl bg-slate-900 p-4 text-white">
-        <Avatar name="Anna Kovács" size="sm" />
-        <div className="min-w-0 flex-1">
-          <p className="text-sm">{t('right.newPostToast', { name: 'Anna Kovács' })}</p>
-          <p className="mt-0.5 text-xs text-slate-300">{t('right.newPostHint')}</p>
-        </div>
-        <X className="h-4 w-4 shrink-0 cursor-pointer text-slate-400 hover:text-white" />
-      </div>
-
       <ListCard title={t('right.friends')}>
         {friends.length === 0 ? (
           <p className="text-xs text-slate-400">{t('right.noFriends')}</p>
         ) : (
           <>
-            {friends.slice(0, FRIENDS_PREVIEW).map((f) => (
+            {friends.slice(0, LIST_PREVIEW).map((f) => (
               <NavLink
                 key={f.id}
                 to={`/users/${f.id}`}
@@ -70,7 +61,7 @@ export default function RightSidebar() {
                 <span className="truncate text-sm text-slate-700 hover:text-brand">{f.displayName}</span>
               </NavLink>
             ))}
-            {friends.length > FRIENDS_PREVIEW && (
+            {friends.length > LIST_PREVIEW && (
               <NavLink to="/friends" className="text-xs font-medium text-brand hover:underline">
                 {t('right.seeAllFriends', { count: friends.length })}
               </NavLink>
@@ -79,16 +70,28 @@ export default function RightSidebar() {
         )}
       </ListCard>
 
-      <ListCard title={t('right.followedCreators')}>
-        {CREATORS.map((c) => (
-          <div key={c.name} className="flex items-center gap-3">
-            <Avatar name={c.name} size="sm" />
-            <div className="min-w-0">
-              <div className="truncate text-sm font-medium text-slate-700">{c.name}</div>
-              <div className="truncate text-xs text-slate-400">{c.meta}</div>
-            </div>
-          </div>
-        ))}
+      <ListCard title={t('right.following')}>
+        {following.length === 0 ? (
+          <p className="text-xs text-slate-400">{t('right.noFollowing')}</p>
+        ) : (
+          <>
+            {following.slice(0, LIST_PREVIEW).map((u) => (
+              <NavLink
+                key={u.id}
+                to={`/users/${u.id}`}
+                className="flex items-center gap-3 transition-opacity hover:opacity-80"
+              >
+                <Avatar name={u.displayName} src={u.avatarUrl} size="sm" />
+                <span className="truncate text-sm text-slate-700 hover:text-brand">{u.displayName}</span>
+              </NavLink>
+            ))}
+            {following.length > LIST_PREVIEW && (
+              <NavLink to="/following" className="text-xs font-medium text-brand hover:underline">
+                {t('right.seeAllFollowing', { count: following.length })}
+              </NavLink>
+            )}
+          </>
+        )}
       </ListCard>
 
       {/* Előfizetés-kártya (a #14 kártya köti be a Paddle-höz) */}
