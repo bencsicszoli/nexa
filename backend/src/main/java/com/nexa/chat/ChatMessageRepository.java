@@ -36,14 +36,18 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, UUID> 
 
     /**
      * Olvasatlan üzenetek száma egy szálban a hívó szemszögéből: a {@code lastReadAt} utáni,
-     * nem a hívótól származó üzenetek. {@code lastReadAt == null} esetén minden idegen üzenet
-     * olvasatlan.
+     * nem a hívótól származó üzenetek. Ha a hívónak még nincs olvasottság-rekordja, a hívó
+     * {@link java.time.Instant#EPOCH}-ot adjon át — így minden idegen üzenet olvasatlannak számít.
+     *
+     * <p>A paraméter szándékosan <b>sosem null</b>: a korábbi {@code (:p is null or ...)} forma a
+     * PostgreSQL-en „could not determine data type of parameter" hibára futott (a típus nélküli null
+     * miatt), miközben H2-n elment — ezért az EPOCH-sentinel a helyes, dialektusfüggetlen megoldás.
      */
     @Query("""
             select count(m) from ChatMessage m
             where m.conversation.id = :conversationId
               and m.sender.id <> :userId
-              and (:lastReadAt is null or m.createdAt > :lastReadAt)
+              and m.createdAt > :lastReadAt
             """)
     long countUnread(@Param("conversationId") UUID conversationId,
                      @Param("userId") UUID userId,

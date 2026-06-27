@@ -253,7 +253,9 @@ public class ChatService {
     }
 
     private ConversationDto toDto(Conversation c, UUID viewerId, Map<UUID, Instant> reads) {
-        Instant lastReadAt = reads.get(c.getId());
+        // Olvasottság-rekord híján EPOCH a sentinel (minden idegen üzenet olvasatlan); a null
+        // paramétert a PostgreSQL nem tudná típushoz kötni a countUnread-ben.
+        Instant lastReadAt = reads.getOrDefault(c.getId(), Instant.EPOCH);
         long unread = messageRepository.countUnread(c.getId(), viewerId, lastReadAt);
 
         String title;
