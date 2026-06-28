@@ -40,6 +40,14 @@ nexa:
       # A feltöltési tokenek aláírókulcsa; alapból a JWT-titok.
       secret: ${nexa.jwt.secret}
       upload-ttl-seconds: 300            # az aláírt feltöltési link 5 percig él
+  webrtc:
+    # ICE-szerverek a videohíváshoz (#13). STUN: nyilvános Google-szerver alapból (cím-felfedezés,
+    # a legtöbb hálózaton elég). TURN (relé szigorú NAT/tűzfal mögött): coturn env-ből, ha kell —
+    # üresen hagyva nincs TURN. A frontend a GET /api/calls/ice-servers-ből kapja ezt a listát.
+    stun-urls: ${WEBRTC_STUN_URLS:stun:stun.l.google.com:19302,stun:stun1.l.google.com:19302}
+    turn-url: ${WEBRTC_TURN_URL:}
+    turn-username: ${WEBRTC_TURN_USERNAME:}
+    turn-credential: ${WEBRTC_TURN_CREDENTIAL:}
 
 management:
   endpoints:

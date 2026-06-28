@@ -9,6 +9,8 @@ import { FriendNotificationsProvider } from '../../friends/FriendNotificationsCo
 import { StompProvider } from '../../realtime/StompProvider'
 import { NotificationsProvider } from '../../notifications/NotificationsContext'
 import { ChatProvider } from '../../chat/ChatContext'
+import { CallProvider } from '../../call/CallContext'
+import CallOverlay from '../../call/CallOverlay'
 import NotificationToaster from '../NotificationToaster'
 
 // Az "A" (3 oszlopos) elrendezés: bal navigáció · középső tartalom · jobb sáv.
@@ -24,6 +26,7 @@ export default function AppShell() {
     <StompProvider>
     <NotificationsProvider>
     <ChatProvider>
+    <CallProvider>
     <div className="min-h-screen bg-slate-100 text-slate-900">
       <TopBar onOpenMenu={() => setMenuOpen(true)} />
 
@@ -75,7 +78,11 @@ export default function AppShell() {
 
       {/* Valós idejű értesítés toastja (#11) */}
       <NotificationToaster />
+
+      {/* Videohívás teljes képernyős felülete (#13) — bárhol a felületen megjelenik */}
+      <CallOverlay />
     </div>
+    </CallProvider>
     </ChatProvider>
     </NotificationsProvider>
     </StompProvider>

@@ -209,6 +209,20 @@
     "loadOlder": "Older messages",
     "loadingOlder": "Loading…"
   },
+  "call": {
+    "startVideo": "Start video call",
+    "incoming": "Incoming video call…",
+    "calling": "Calling…",
+    "connecting": "Connecting…",
+    "accept": "Accept",
+    "reject": "Decline",
+    "cancel": "Cancel",
+    "hangup": "Hang up",
+    "muteMic": "Mute microphone",
+    "unmuteMic": "Unmute microphone",
+    "stopCamera": "Turn camera off",
+    "startCamera": "Turn camera on"
+  },
   "right": {
     "friends": "Friends",
     "noFriends": "You don't have any friends yet.",

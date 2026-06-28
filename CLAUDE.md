@@ -101,9 +101,20 @@ Konvenciók a meglévő vázból (kövesd új kódnál is):
 
 ## Állapot
 
-`#1` (váz + health check), `#2` (app shell + i18n), `#3` (regisztráció/bejelentkezés JWT-vel),
-`#4` (profil: szerkesztés + avatar), `#5` (szöveges bejegyzés létrehozása) és `#6` (kép/videó a
-bejegyzésben) **kész és lezárva**. A következő `#7` (ismerősök).
+`#1`–`#12` **kész** (váz, app shell+i18n, JWT-auth, profil+avatar, szöveges/médiás bejegyzés,
+ismerősök, követés, csoportok, hírfolyam, valós idejű értesítés, csevegés). `#13` (1:1 videohívás,
+WebRTC) **megvalósítva, böngészős kétfelhasználós tesztre vár**. A következő `#14` (Paddle előfizetés).
+
+**Videohívás (`#13`):** 1:1 WebRTC-hívás a csevegő-szálból (DIRECT). A jelzés (signaling: SDP/ICE) a
+meglévő STOMP-kapcsolaton megy — a kliens a `/app/call.signal` célra küld, a másik fél a
+`/user/queue/call` címen kap; a backend (`com.nexa.call.CallService`) **állapotmentes relé**, csak a
+szál-hozzáférést ellenőrzi (idegen/csoport-szál → `CONVERSATION_NOT_FOUND`). Keret-típusok
+(`CallSignalType`): `OFFER`/`ANSWER`/`ICE`/`HANGUP`/`REJECT`/`CANCEL`/`BUSY`. Az ICE-szerverek a
+`GET /api/calls/ice-servers`-ből jönnek (configból: `nexa.webrtc.stun-urls` alapból nyilvános Google
+STUN; `nexa.webrtc.turn-*` opcionális coturn-höz). Frontend: `CallProvider`/`useCall` az
+állapotgéppel + `RTCPeerConnection` kezelés, `CallOverlay` a teljes képernyős UI (bejövő/kimenő/élő,
+némítás/kamera/bontás), a hívásgomb a `ChatThread` fejlécében (csak DIRECT). TURN nélkül a
+szimmetrikus NAT mögötti kapcsolat nem mindig épül föl — éles környezethez coturn kell.
 
 **Poszt-média (`#6`):** a bejegyzéshez kép/videó csatolható, ugyanazzal a presigned-URL mintával, mint
 az avatar. Feltöltési URL: `POST /api/posts/media/upload-url` (kép: JPEG/PNG/WebP/GIF; videó: MP4/WebM),

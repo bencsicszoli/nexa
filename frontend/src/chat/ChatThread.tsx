@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Loader2, Send } from 'lucide-react'
+import { Loader2, Send, Video } from 'lucide-react'
 import Avatar from '../components/Avatar'
 import { useAuth } from '../auth/AuthContext'
 import { errorKey } from '../auth/errorKey'
 import { formatRelativeTime } from '../lib/time'
+import { useCall } from '../call/CallContext'
 import { useChat } from './ChatContext'
 import { getMessages } from './chatApi'
 import type { ChatMessage, Conversation } from './types'
@@ -30,6 +31,7 @@ export default function ChatThread({ conversationId }: { conversationId: string 
     setActiveConversation,
     subscribeToMessages,
   } = useChat()
+  const { startCall, status: callStatus } = useCall()
 
   const [header, setHeader] = useState<Conversation | null>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
@@ -174,6 +176,25 @@ export default function ChatThread({ conversationId }: { conversationId: string 
               )}
               {isGroup && <p className="text-xs text-slate-400">{t('chat.groupChat')}</p>}
             </div>
+            {/* Videohívás csak kétszemélyes szálban (#13) */}
+            {!isGroup && view.otherUserId && (
+              <button
+                type="button"
+                onClick={() =>
+                  startCall(conversationId, {
+                    userId: view.otherUserId!,
+                    name: view.title,
+                    avatarUrl: view.imageUrl,
+                  })
+                }
+                disabled={callStatus !== 'idle'}
+                className="ml-auto inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-brand disabled:opacity-40"
+                aria-label={t('call.startVideo')}
+                title={t('call.startVideo')}
+              >
+                <Video className="h-5 w-5" />
+              </button>
+            )}
           </>
         )}
       </header>

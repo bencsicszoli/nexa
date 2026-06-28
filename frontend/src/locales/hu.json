@@ -209,6 +209,20 @@
     "loadOlder": "Régebbi üzenetek",
     "loadingOlder": "Betöltés…"
   },
+  "call": {
+    "startVideo": "Videohívás indítása",
+    "incoming": "Bejövő videohívás…",
+    "calling": "Hívás…",
+    "connecting": "Kapcsolódás…",
+    "accept": "Elfogadás",
+    "reject": "Elutasítás",
+    "cancel": "Megszakítás",
+    "hangup": "Hívás bontása",
+    "muteMic": "Mikrofon némítása",
+    "unmuteMic": "Mikrofon visszakapcsolása",
+    "stopCamera": "Kamera kikapcsolása",
+    "startCamera": "Kamera bekapcsolása"
+  },
   "right": {
     "friends": "Ismerősök",
     "noFriends": "Még nincsenek ismerőseid.",
