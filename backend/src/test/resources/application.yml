@@ -24,3 +24,13 @@ nexa:
       dir: ${java.io.tmpdir}/nexa-test-media
       secret: ${nexa.jwt.secret}
       upload-ttl-seconds: 300
+  payment:
+    paddle:
+      environment: sandbox
+      api-base-url: https://sandbox-api.paddle.com
+      api-key: "test-api-key"
+      client-token: "test_client_token"
+      webhook-secret: "pdl_ntfset_test_secret_for_webhook_signing"
+      price-monthly: "pri_monthly_test"
+      price-annual: "pri_annual_test"
+      trial-days: 14

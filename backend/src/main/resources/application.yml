@@ -48,6 +48,18 @@ nexa:
     turn-url: ${WEBRTC_TURN_URL:}
     turn-username: ${WEBRTC_TURN_USERNAME:}
     turn-credential: ${WEBRTC_TURN_CREDENTIAL:}
+  payment:
+    # Paddle előfizetés (#14). Sandboxban fejlesztünk/tesztelünk — éles: PADDLE_ENV=production
+    # és a production-api.paddle.com. A kártyaadat sosem érinti a szervert (Paddle hosztolt checkout).
+    paddle:
+      environment: ${PADDLE_ENV:sandbox}              # sandbox | production
+      api-base-url: ${PADDLE_API_URL:https://sandbox-api.paddle.com}
+      api-key: ${PADDLE_API_KEY:}                     # szerver-oldali Bearer kulcs (portál, lekérdezés)
+      client-token: ${PADDLE_CLIENT_TOKEN:}           # publikus kliens-token a frontend checkouthoz
+      webhook-secret: ${PADDLE_WEBHOOK_SECRET:}        # pdl_ntfset_... — webhook aláírás-ellenőrzéshez
+      price-monthly: ${PADDLE_PRICE_MONTHLY:}          # havi csomag price ID (pri_...)
+      price-annual: ${PADDLE_PRICE_ANNUAL:}            # éves csomag price ID (pri_...)
+      trial-days: ${PADDLE_TRIAL_DAYS:14}
 
 management:
   endpoints:

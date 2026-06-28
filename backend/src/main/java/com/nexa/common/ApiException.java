@@ -215,4 +215,24 @@ public class ApiException extends RuntimeException {
         return new ApiException(HttpStatus.BAD_REQUEST, "EMPTY_MESSAGE",
                 "A message cannot be empty.");
     }
+
+    // --- Előfizetés (#14) ---
+
+    /** A Paddle-integráció nincs beállítva (hiányzó kulcs/price ID) — szerveroldali konfig. */
+    public static ApiException subscriptionNotConfigured() {
+        return new ApiException(HttpStatus.SERVICE_UNAVAILABLE, "SUBSCRIPTION_NOT_CONFIGURED",
+                "Subscriptions are not configured on the server.");
+    }
+
+    /** A Paddle webhook aláírása érvénytelen, hiányzik vagy lejárt. */
+    public static ApiException invalidWebhookSignature() {
+        return new ApiException(HttpStatus.UNAUTHORIZED, "INVALID_WEBHOOK_SIGNATURE",
+                "The webhook signature is invalid.");
+    }
+
+    /** Nincs Paddle-előfizetés a felhasználóhoz (pl. portál kérése checkout előtt). */
+    public static ApiException noSubscription() {
+        return new ApiException(HttpStatus.NOT_FOUND, "NO_SUBSCRIPTION",
+                "You do not have a subscription yet.");
+    }
 }

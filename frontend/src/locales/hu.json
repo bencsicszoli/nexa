@@ -17,6 +17,7 @@
     "messages": "Üzenetek",
     "profile": "Profilom",
     "media": "Médiatár",
+    "subscription": "Előfizetés",
     "settings": "Beállítások",
     "myGroups": "Csoportjaim",
     "newFriendRequests": "{{count}} új ismerőskérés"
@@ -261,6 +262,42 @@
     "cropApply": "Alkalmaz",
     "cropCancel": "Mégse"
   },
+  "billing": {
+    "title": "Előfizetés",
+    "subtitle": "Kezeld a Nexa-előfizetésed és a számlázást.",
+    "statusLabel": "Állapot",
+    "status": {
+      "NONE": "Nincs aktív előfizetés",
+      "TRIALING": "Próbaidő",
+      "ACTIVE": "Aktív",
+      "PAST_DUE": "Fizetésre vár",
+      "PAUSED": "Szüneteltetve",
+      "CANCELED": "Lemondva"
+    },
+    "trialDaysLeft_one": "Még {{count}} nap van a próbaidőből",
+    "trialDaysLeft_other": "Még {{count}} nap van a próbaidőből",
+    "trialEnds": "A próbaidő vége: {{date}}",
+    "renewsOn": "Megújul: {{date}}",
+    "canceledOn": "Lemondva: {{date}}",
+    "pastDueHint": "Az utolsó fizetés sikertelen volt. Frissítsd a fizetési módot az előfizetés megtartásához.",
+    "noSubHint": "Indítsd el a 14 napos ingyenes próbaidőt. A próbaidő végéig nincs terhelés — bármikor lemondható.",
+    "choosePlan": "Válassz csomagot",
+    "planMonthly": "Havi",
+    "planAnnual": "Éves",
+    "planAnnualBadge": "Legjobb ár",
+    "planMonthlyHint": "Havi számlázás. Bármikor lemondható.",
+    "planAnnualHint": "Éves számlázás. Két hónap ingyen a havihoz képest.",
+    "currentPlan": "Jelenlegi csomag",
+    "startTrial": "14 napos ingyenes próbaidő indítása",
+    "subscribe": "Előfizetés",
+    "manage": "Előfizetés kezelése",
+    "opening": "Megnyitás…",
+    "trialNote": "14 napos ingyenes próbaidő · kártya szükséges · bármikor lemondható",
+    "notConfigured": "Az előfizetés jelenleg nem elérhető. Kérlek próbáld újra később.",
+    "loadError": "Nem sikerült betölteni az előfizetésed.",
+    "retry": "Újra",
+    "checkoutFailed": "Nem sikerült megnyitni a fizetést. Próbáld újra."
+  },
   "lang": {
     "switchTo": "Váltás erre: {{lang}}",
     "hu": "Magyar",
@@ -322,6 +359,8 @@
       "COMMENT_NOT_FOUND": "A hozzászólás nem található.",
       "EMPTY_COMMENT": "A hozzászólás nem lehet üres.",
       "INVALID_COMMENT_PARENT": "A szülő hozzászólás nem ehhez a bejegyzéshez tartozik.",
+      "SUBSCRIPTION_NOT_CONFIGURED": "Az előfizetés jelenleg nem elérhető. Kérlek próbáld újra később.",
+      "NO_SUBSCRIPTION": "Még nincs előfizetésed.",
       "NETWORK": "Nem sikerült elérni a szervert. Próbáld újra.",
       "UNKNOWN_ERROR": "Hiba történt. Próbáld újra."
     }

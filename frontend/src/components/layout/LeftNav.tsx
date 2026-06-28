@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NavLink } from 'react-router-dom'
 import {
+  CreditCard,
   FolderKanban,
   Image as ImageIcon,
   type LucideIcon,
@@ -32,6 +33,7 @@ const PRIMARY: NavItem[] = [
   { to: '/messages', labelKey: 'nav.messages', icon: MessageCircle },
   { to: '/profile', labelKey: 'nav.profile', icon: User },
   { to: '/media', labelKey: 'nav.media', icon: ImageIcon },
+  { to: '/billing', labelKey: 'nav.subscription', icon: CreditCard },
   { to: '/settings', labelKey: 'nav.settings', icon: Settings },
 ]
 

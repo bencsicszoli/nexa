@@ -54,6 +54,9 @@ public class SecurityConfig {
                         // Médiakiszolgálás publikus; a feltöltést az aláírt token védi (#4 lokál tároló).
                         .requestMatchers(HttpMethod.GET, "/api/media/**").permitAll()
                         .requestMatchers(HttpMethod.PUT, "/api/storage/upload").permitAll()
+                        // Paddle webhook (#14): nyilvános, de a Paddle-Signature HMAC védi
+                        // (PaddleWebhookVerifier), nem ez a HTTP-szűrő.
+                        .requestMatchers(HttpMethod.POST, "/api/webhooks/paddle").permitAll()
                         // WebSocket-kézfogás (#11): a STOMP CONNECT keretet a token védi
                         // (StompAuthChannelInterceptor), nem ez a HTTP-szűrő.
                         .requestMatchers("/ws/**").permitAll()

@@ -9,6 +9,7 @@ import FollowingPage from './pages/FollowingPage'
 import GroupsPage from './pages/GroupsPage'
 import GroupPage from './pages/GroupPage'
 import MessagesPage from './pages/MessagesPage'
+import BillingPage from './pages/BillingPage'
 import PlaceholderPage from './pages/PlaceholderPage'
 import LoginPage from './pages/auth/LoginPage'
 import RegisterPage from './pages/auth/RegisterPage'
@@ -33,6 +34,7 @@ export default function App() {
           <Route path="profile" element={<ProfilePage />} />
           <Route path="users/:id" element={<UserProfilePage />} />
           <Route path="media" element={<PlaceholderPage titleKey="nav.media" />} />
+          <Route path="billing" element={<BillingPage />} />
           <Route path="settings" element={<PlaceholderPage titleKey="nav.settings" />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

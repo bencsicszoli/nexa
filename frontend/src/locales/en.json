@@ -17,6 +17,7 @@
     "messages": "Messages",
     "profile": "My profile",
     "media": "Media library",
+    "subscription": "Subscription",
     "settings": "Settings",
     "myGroups": "My groups",
     "newFriendRequests": "{{count}} new friend requests"
@@ -261,6 +262,42 @@
     "cropApply": "Apply",
     "cropCancel": "Cancel"
   },
+  "billing": {
+    "title": "Subscription",
+    "subtitle": "Manage your Nexa subscription and billing.",
+    "statusLabel": "Status",
+    "status": {
+      "NONE": "No active subscription",
+      "TRIALING": "Free trial",
+      "ACTIVE": "Active",
+      "PAST_DUE": "Payment due",
+      "PAUSED": "Paused",
+      "CANCELED": "Canceled"
+    },
+    "trialDaysLeft_one": "{{count}} day left in your trial",
+    "trialDaysLeft_other": "{{count}} days left in your trial",
+    "trialEnds": "Trial ends {{date}}",
+    "renewsOn": "Renews on {{date}}",
+    "canceledOn": "Canceled on {{date}}",
+    "pastDueHint": "Your last payment failed. Update your payment method to keep your subscription.",
+    "noSubHint": "Start your 14-day free trial. No charge until the trial ends — cancel anytime.",
+    "choosePlan": "Choose a plan",
+    "planMonthly": "Monthly",
+    "planAnnual": "Annual",
+    "planAnnualBadge": "Best value",
+    "planMonthlyHint": "Billed monthly. Cancel anytime.",
+    "planAnnualHint": "Billed yearly. Two months free vs. monthly.",
+    "currentPlan": "Current plan",
+    "startTrial": "Start 14-day free trial",
+    "subscribe": "Subscribe",
+    "manage": "Manage subscription",
+    "opening": "Opening…",
+    "trialNote": "14-day free trial · card required · cancel anytime",
+    "notConfigured": "Subscriptions are not available right now. Please try again later.",
+    "loadError": "Couldn't load your subscription.",
+    "retry": "Try again",
+    "checkoutFailed": "Couldn't open the checkout. Please try again."
+  },
   "lang": {
     "switchTo": "Switch to {{lang}}",
     "hu": "Hungarian",
@@ -322,6 +359,8 @@
       "COMMENT_NOT_FOUND": "Comment not found.",
       "EMPTY_COMMENT": "A comment cannot be empty.",
       "INVALID_COMMENT_PARENT": "The parent comment does not belong to this post.",
+      "SUBSCRIPTION_NOT_CONFIGURED": "Subscriptions are not available right now. Please try again later.",
+      "NO_SUBSCRIPTION": "You don't have a subscription yet.",
       "NETWORK": "Could not reach the server. Please try again.",
       "UNKNOWN_ERROR": "Something went wrong. Please try again."
     }

@@ -7,9 +7,16 @@ import { getFriends } from '../../friends/friendsApi'
 import type { Friend } from '../../friends/types'
 import { getFollowing } from '../../follow/followApi'
 import type { FollowUser } from '../../follow/types'
+import { useSubscription } from '../../subscription/useSubscription'
 
 // A jobb oldali sávban legfeljebb ennyi elemet mutatunk (a teljes lista a /friends, ill. /following oldalon).
 const LIST_PREVIEW = 6
+
+/** A hátralévő próbaidő napokban (felfelé kerekítve, sosem negatív). */
+function trialDaysLeft(iso: string | null | undefined): number {
+  if (!iso) return 0
+  return Math.max(0, Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000))
+}
 
 function ListCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -22,6 +29,8 @@ function ListCard({ title, children }: { title: string; children: React.ReactNod
 
 export default function RightSidebar() {
   const { t } = useTranslation()
+
+  const { subscription } = useSubscription()
 
   const [friends, setFriends] = useState<Friend[]>([])
   const [following, setFollowing] = useState<FollowUser[]>([])
@@ -94,24 +103,29 @@ export default function RightSidebar() {
         )}
       </ListCard>
 
-      {/* Előfizetés-kártya (a #14 kártya köti be a Paddle-höz) */}
+      {/* Előfizetés-kártya — valós állapot a /api/subscriptions/me-ből (#14) */}
       <section className="rounded-2xl border border-brand/20 bg-brand/5 p-4">
         <div className="flex items-center gap-2 text-sm font-semibold text-brand">
           <Sparkles className="h-4 w-4" />
           {t('right.premiumTitle')}
         </div>
         <p className="mt-2 text-xs text-slate-600">
-          {t('right.premiumDesc')}{' '}
-          <span className="font-semibold text-slate-800">
-            {t('right.premiumTrial', { days: 9 })}
-          </span>
+          {t('right.premiumDesc')}
+          {subscription?.status === 'TRIALING' && (
+            <>
+              {' '}
+              <span className="font-semibold text-slate-800">
+                {t('right.premiumTrial', { days: trialDaysLeft(subscription.trialEndsAt) })}
+              </span>
+            </>
+          )}
         </p>
-        <button
-          type="button"
-          className="mt-3 w-full rounded-lg bg-brand py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-dark"
+        <NavLink
+          to="/billing"
+          className="mt-3 block w-full rounded-lg bg-brand py-2 text-center text-sm font-semibold text-white transition-colors hover:bg-brand-dark"
         >
           {t('right.premiumManage')}
-        </button>
+        </NavLink>
       </section>
     </div>
   )
