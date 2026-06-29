@@ -246,4 +246,42 @@ public class ApiException extends RuntimeException {
         return new ApiException(HttpStatus.PAYMENT_REQUIRED, "SUBSCRIPTION_REQUIRED",
                 "An active subscription or trial is required.");
     }
+
+    // --- Értesítések / beállítások / 2FA (#17) ---
+
+    /** Nem létező vagy nem a hívóhoz tartozó értesítés. */
+    public static ApiException notificationNotFound() {
+        return new ApiException(HttpStatus.NOT_FOUND, "NOTIFICATION_NOT_FOUND",
+                "Notification not found.");
+    }
+
+    /** Jelszóváltáskor a megadott jelenlegi jelszó nem helyes. */
+    public static ApiException wrongPassword() {
+        return new ApiException(HttpStatus.BAD_REQUEST, "WRONG_PASSWORD",
+                "The current password is incorrect.");
+    }
+
+    /** A megadott 2FA (TOTP vagy recovery) kód érvénytelen. */
+    public static ApiException invalid2faCode() {
+        return new ApiException(HttpStatus.BAD_REQUEST, "INVALID_2FA_CODE",
+                "The verification code is invalid.");
+    }
+
+    /** A kétlépcsős login challenge token érvénytelen vagy lejárt. */
+    public static ApiException invalidChallengeToken() {
+        return new ApiException(HttpStatus.UNAUTHORIZED, "INVALID_2FA_CHALLENGE",
+                "The two-factor challenge is invalid or has expired.");
+    }
+
+    /** A 2FA már be van kapcsolva (újra-bekapcsolás nem értelmezett). */
+    public static ApiException twoFactorAlreadyEnabled() {
+        return new ApiException(HttpStatus.CONFLICT, "TWO_FACTOR_ALREADY_ENABLED",
+                "Two-factor authentication is already enabled.");
+    }
+
+    /** 2FA setup/enable-disable lépés, amíg nincs folyamatban lévő beállítás. */
+    public static ApiException twoFactorNotInSetup() {
+        return new ApiException(HttpStatus.BAD_REQUEST, "TWO_FACTOR_NOT_IN_SETUP",
+                "Start the two-factor setup first.");
+    }
 }

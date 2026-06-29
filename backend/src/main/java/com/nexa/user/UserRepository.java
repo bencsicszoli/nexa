@@ -19,10 +19,14 @@ public interface UserRepository extends JpaRepository<User, UUID> {
      * Felhasználók keresése név vagy e-mail töredékre (kis/nagybetűtől függetlenül),
      * a hívó saját magát kizárva, név szerint rendezve. Üres szűrőre minden (más)
      * felhasználót ad — az „Emberek" böngészéséhez (#7). A teljes szövegkereső a #16.
+     * Csak a {@code searchable=true} felhasználók jelennek meg: aki kikapcsolja a
+     * kereshetőséget (#17), nem bukkan fel a felfedezésben (a meglévő kapcsolatokat és a
+     * {@code /users/:id} profilt ez nem érinti).
      */
     @Query("""
             select u from User u
             where u.id <> :excludeId
+              and u.searchable = true
               and (lower(u.displayName) like lower(concat('%', :q, '%'))
                 or lower(u.email) like lower(concat('%', :q, '%')))
             order by u.displayName asc

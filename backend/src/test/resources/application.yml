@@ -17,6 +17,8 @@ nexa:
     secret: "test-secret-test-secret-test-secret-32b!"
     access-token-ttl-seconds: 900
     refresh-token-ttl-seconds: 604800
+  security:
+    totp-encryption-key: "test-totp-encryption-key"
   storage:
     provider: local
     max-upload-bytes: 5242880

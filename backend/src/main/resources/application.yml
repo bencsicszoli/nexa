@@ -29,6 +29,10 @@ nexa:
     secret: ${JWT_SECRET:dev-only-secret-change-me-please-32bytes-min!!}
     access-token-ttl-seconds: 900        # 15 perc
     refresh-token-ttl-seconds: 604800    # 7 nap
+  security:
+    # A 2FA TOTP-titok DB-titkosításának kulcsa (#17). Fejlesztői alapérték; élesben KÖTELEZŐ
+    # a TOTP_ENCRYPTION_KEY env beállítása (bármilyen hosszú jelmondat; SHA-256 képzi a kulcsot).
+    totp-encryption-key: ${TOTP_ENCRYPTION_KEY:dev-only-totp-encryption-key-change-in-prod}
   storage:
     # local (alap): lemezre ment, /api/media-ról szolgál ki — nincs külső infra.
     # s3 (#6): valódi R2/S3 presigned URL ugyanezzel a frontend-szerződéssel.

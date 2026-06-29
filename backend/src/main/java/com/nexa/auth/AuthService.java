@@ -2,6 +2,7 @@ package com.nexa.auth;
 
 import com.nexa.auth.dto.AuthResponse;
 import com.nexa.auth.dto.LoginRequest;
+import com.nexa.auth.dto.LoginResult;
 import com.nexa.auth.dto.RegisterRequest;
 import com.nexa.auth.dto.UserDto;
 import com.nexa.common.ApiException;
@@ -32,6 +33,7 @@ public class AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final TwoFactorService twoFactorService;
     private final long refreshTokenTtlSeconds;
 
     private final SecureRandom secureRandom = new SecureRandom();
@@ -41,11 +43,13 @@ public class AuthService {
             RefreshTokenRepository refreshTokenRepository,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
+            TwoFactorService twoFactorService,
             @Value("${nexa.jwt.refresh-token-ttl-seconds}") long refreshTokenTtlSeconds) {
         this.userRepository = userRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.twoFactorService = twoFactorService;
         this.refreshTokenTtlSeconds = refreshTokenTtlSeconds;
     }
 
@@ -60,14 +64,52 @@ public class AuthService {
         return issueTokens(user);
     }
 
+    /**
+     * Bejelentkezés. Ha a felhasználónál be van kapcsolva a 2FA, NEM ad tokent, hanem egy rövid
+     * életű challenge tokent ({@link LoginResult#challenge}); a tokeneket a {@link #loginWith2fa}
+     * állítja ki a 2FA kód megadása után. 2FA nélkül a sima token-páros megy (#17).
+     */
     @Transactional
-    public AuthResponse login(LoginRequest req) {
+    public LoginResult login(LoginRequest req) {
         User user = userRepository.findByEmailIgnoreCase(req.email().trim())
                 .orElseThrow(ApiException::invalidCredentials);
         if (!passwordEncoder.matches(req.password(), user.getPasswordHash())) {
             throw ApiException.invalidCredentials();
         }
+        if (user.isTotpEnabled()) {
+            return LoginResult.challenge(jwtService.generate2faChallengeToken(user.getId()));
+        }
+        return LoginResult.authenticated(issueTokens(user));
+    }
+
+    /** A kétlépcsős login második lépése: challenge token + 2FA kód → token-páros (#17). */
+    @Transactional
+    public AuthResponse loginWith2fa(String challengeToken, String code) {
+        UUID userId;
+        try {
+            userId = jwtService.extract2faChallengeUserId(challengeToken);
+        } catch (Exception e) {
+            throw ApiException.invalidChallengeToken();
+        }
+        User user = userRepository.findById(userId).orElseThrow(ApiException::invalidChallengeToken);
+        if (!user.isTotpEnabled() || !twoFactorService.verify(user, code)) {
+            throw ApiException.invalid2faCode();
+        }
         return issueTokens(user);
+    }
+
+    /**
+     * Jelszóváltás: a jelenlegi jelszó ellenőrzése → új hash → az ÖSSZES refresh token visszavonása
+     * (a felhasználó minden munkamenete megszakad, a sajátját is beleértve) (#17).
+     */
+    @Transactional
+    public void changePassword(UUID userId, String currentPassword, String newPassword) {
+        User user = userRepository.findById(userId).orElseThrow(ApiException::userNotFound);
+        if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
+            throw ApiException.wrongPassword();
+        }
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        refreshTokenRepository.deleteByUser(user);
     }
 
     /** Refresh token beváltása: ellenőrzés → régi visszavonása (rotáció) → új páros. */

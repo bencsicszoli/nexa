@@ -1,6 +1,7 @@
 package com.nexa.user;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -44,6 +45,37 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role = Role.USER;
+
+    /**
+     * A felület nyelve a felhasználónak (#17). A bejelentkezéskor/{@code /auth/me}-kor a frontend
+     * ezt állítja be. DB-default 'hu', hogy a séma-frissítéskor a meglévő sorok is értéket kapjanak.
+     */
+    @Column(name = "locale", nullable = false, columnDefinition = "varchar(8) default 'hu'")
+    private String locale = "hu";
+
+    /** Megjelenhet-e a felhasználó a keresőben/felfedezésben (#17). */
+    @Column(name = "searchable", nullable = false, columnDefinition = "boolean default true")
+    private boolean searchable = true;
+
+    /** Elrejtse-e az online jelenlétét mások elől (#17). */
+    @Column(name = "hide_presence", nullable = false, columnDefinition = "boolean default false")
+    private boolean hidePresence = false;
+
+    /** Be van-e kapcsolva a kétlépcsős hitelesítés (TOTP, #17); alapból ki. */
+    @Column(name = "totp_enabled", nullable = false, columnDefinition = "boolean default false")
+    private boolean totpEnabled = false;
+
+    /**
+     * A TOTP titok (Base32), AES-GCM-mel <b>titkosítva</b> tárolva (lásd {@code SecretCipher}).
+     * {@code null}, ha a 2FA nincs beállítva.
+     */
+    @Column(name = "totp_secret")
+    private String totpSecret;
+
+    /** Értesítési preferenciák típusonként, JSON-ként tárolva (#17). Null → {@link NotificationPrefs#defaults()}. */
+    @Convert(converter = NotificationPrefsConverter.class)
+    @Column(name = "notification_prefs", columnDefinition = "text")
+    private NotificationPrefs notificationPrefs;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
@@ -108,6 +140,55 @@ public class User {
 
     public void setRole(Role role) {
         this.role = role;
+    }
+
+    public String getLocale() {
+        return locale;
+    }
+
+    public void setLocale(String locale) {
+        this.locale = locale;
+    }
+
+    public boolean isSearchable() {
+        return searchable;
+    }
+
+    public void setSearchable(boolean searchable) {
+        this.searchable = searchable;
+    }
+
+    public boolean isHidePresence() {
+        return hidePresence;
+    }
+
+    public void setHidePresence(boolean hidePresence) {
+        this.hidePresence = hidePresence;
+    }
+
+    public boolean isTotpEnabled() {
+        return totpEnabled;
+    }
+
+    public void setTotpEnabled(boolean totpEnabled) {
+        this.totpEnabled = totpEnabled;
+    }
+
+    public String getTotpSecret() {
+        return totpSecret;
+    }
+
+    public void setTotpSecret(String totpSecret) {
+        this.totpSecret = totpSecret;
+    }
+
+    /** Az értesítési preferenciák; ha még nincs beállítva (null), a mindent engedő alapértelmezés. */
+    public NotificationPrefs getNotificationPrefs() {
+        return notificationPrefs == null ? NotificationPrefs.defaults() : notificationPrefs;
+    }
+
+    public void setNotificationPrefs(NotificationPrefs notificationPrefs) {
+        this.notificationPrefs = notificationPrefs;
     }
 
     public Instant getCreatedAt() {

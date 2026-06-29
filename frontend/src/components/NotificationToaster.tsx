@@ -18,7 +18,7 @@ export default function NotificationToaster() {
   if (!toast) return null
 
   const handleOpen = () => {
-    open()
+    open(toast)
     dismissToast()
   }
 
@@ -36,7 +36,7 @@ export default function NotificationToaster() {
               {notificationText(toast, t)}
             </span>
             <span className="mt-0.5 block text-xs font-medium text-brand">
-              {t('notifications.clickToRefresh')}
+              {t('notifications.clickToOpen')}
             </span>
           </span>
         </button>

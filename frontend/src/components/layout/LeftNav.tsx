@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NavLink } from 'react-router-dom'
 import {
+  Bell,
   CreditCard,
   FolderKanban,
   Image as ImageIcon,
@@ -15,6 +16,7 @@ import {
 } from 'lucide-react'
 import { useFriendNotifications } from '../../friends/FriendNotificationsContext'
 import { useChat } from '../../chat/ChatContext'
+import { useNotifications } from '../../notifications/NotificationsContext'
 import { AUTH_LOGOUT_EVENT } from '../../lib/api'
 import { GROUPS_CHANGED_EVENT, getMyGroups } from '../../groups/groupsApi'
 import type { Group } from '../../groups/types'
@@ -31,6 +33,7 @@ const PRIMARY: NavItem[] = [
   { to: '/following', labelKey: 'nav.following', icon: UserRoundPlus },
   { to: '/groups', labelKey: 'nav.groups', icon: FolderKanban },
   { to: '/messages', labelKey: 'nav.messages', icon: MessageCircle },
+  { to: '/notifications', labelKey: 'nav.notifications', icon: Bell },
   { to: '/profile', labelKey: 'nav.profile', icon: User },
   { to: '/media', labelKey: 'nav.media', icon: ImageIcon },
   { to: '/billing', labelKey: 'nav.subscription', icon: CreditCard },
@@ -46,6 +49,7 @@ export default function LeftNav({ onNavigate }: LeftNavProps) {
   const { t } = useTranslation()
   const { unseenCount } = useFriendNotifications()
   const { totalUnread } = useChat()
+  const { unreadCount } = useNotifications()
 
   // A felhasználó csoportjai a „Csoportjaim" szekcióhoz. Best-effort: hibát itt nem mutatunk
   // (a /groups oldal igen). Csatlakozás/kilépés/létrehozás után a GROUPS_CHANGED_EVENT frissít.
@@ -83,7 +87,14 @@ export default function LeftNav({ onNavigate }: LeftNavProps) {
       {PRIMARY.map(({ to, labelKey, icon: Icon }) => {
         // Badge: az „Ismerősök" mellett a megtekintetlen kérések, az „Üzenetek" mellett az
         // olvasatlan üzenetek száma; 0-nál nincs jelzés.
-        const badge = to === '/friends' ? unseenCount : to === '/messages' ? totalUnread : 0
+        const badge =
+          to === '/friends'
+            ? unseenCount
+            : to === '/messages'
+              ? totalUnread
+              : to === '/notifications'
+                ? unreadCount
+                : 0
         return (
           <NavLink key={to} to={to} end={to === '/'} className={linkClass} onClick={onNavigate}>
             <Icon className="h-5 w-5 shrink-0" />

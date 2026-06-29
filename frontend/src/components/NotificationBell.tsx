@@ -1,21 +1,24 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
 import { Bell } from 'lucide-react'
 import Avatar from './Avatar'
 import { useNotifications } from '../notifications/NotificationsContext'
 import { useOpenNotification } from '../notifications/useOpenNotification'
 import { notificationText } from '../notifications/notificationText'
 import { formatRelativeTime } from '../lib/time'
+import type { NexaNotification } from '../notifications/types'
 
 /**
- * Fejléc-harang valós idejű értesítésekkel (#11). A jelvény az olvasatlan értesítések
- * számát mutatja; lenyitva a legutóbbi értesítések listája jelenik meg, és mind olvasottá
- * válik (a jelvény eltűnik). Egy tételre kattintva a hírfolyam frissül.
+ * Fejléc-harang az értesítésekkel (#11, #17). A jelvény az olvasatlan értesítések számát
+ * mutatja; lenyitva a legutóbbiak listája jelenik meg, és mind olvasottá válik (a jelvény
+ * eltűnik). Egy tételre kattintva a típusának megfelelő helyre navigál; alul „Összes megtekintése".
  */
 export default function NotificationBell() {
   const { t, i18n } = useTranslation()
   const { notifications, unreadCount, markAllRead } = useNotifications()
   const open = useOpenNotification()
+  const navigate = useNavigate()
 
   const [panelOpen, setPanelOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -37,8 +40,13 @@ export default function NotificationBell() {
     return () => document.removeEventListener('mousedown', onClick)
   }, [panelOpen])
 
-  const handleItem = () => {
-    open()
+  const handleItem = (n: NexaNotification) => {
+    open(n)
+    setPanelOpen(false)
+  }
+
+  const handleSeeAll = () => {
+    navigate('/notifications')
     setPanelOpen(false)
   }
 
@@ -74,7 +82,7 @@ export default function NotificationBell() {
                 <li key={n.id}>
                   <button
                     type="button"
-                    onClick={handleItem}
+                    onClick={() => handleItem(n)}
                     className="flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-slate-50"
                   >
                     <Avatar name={n.actorName} src={n.actorAvatarUrl} size="sm" />
@@ -91,6 +99,14 @@ export default function NotificationBell() {
               ))}
             </ul>
           )}
+
+          <button
+            type="button"
+            onClick={handleSeeAll}
+            className="block w-full border-t border-slate-100 px-4 py-2.5 text-center text-sm font-medium text-brand hover:bg-slate-50"
+          >
+            {t('notifications.seeAll')}
+          </button>
         </div>
       )}
     </div>

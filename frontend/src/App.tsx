@@ -11,6 +11,8 @@ import GroupPage from './pages/GroupPage'
 import MessagesPage from './pages/MessagesPage'
 import SearchPage from './pages/SearchPage'
 import BillingPage from './pages/BillingPage'
+import NotificationsPage from './pages/NotificationsPage'
+import SettingsPage from './pages/SettingsPage'
 import PlaceholderPage from './pages/PlaceholderPage'
 import LoginPage from './pages/auth/LoginPage'
 import RegisterPage from './pages/auth/RegisterPage'
@@ -35,9 +37,10 @@ export default function App() {
           <Route path="search" element={<SearchPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="users/:id" element={<UserProfilePage />} />
+          <Route path="notifications" element={<NotificationsPage />} />
           <Route path="media" element={<PlaceholderPage titleKey="nav.media" />} />
           <Route path="billing" element={<BillingPage />} />
-          <Route path="settings" element={<PlaceholderPage titleKey="nav.settings" />} />
+          <Route path="settings" element={<SettingsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Route>

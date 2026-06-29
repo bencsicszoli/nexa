@@ -5,6 +5,7 @@ import com.nexa.friend.dto.FriendDto;
 import com.nexa.friend.dto.FriendRequestDto;
 import com.nexa.friend.dto.FriendRequestsDto;
 import com.nexa.friend.dto.UserSummaryDto;
+import com.nexa.realtime.NotificationService;
 import com.nexa.user.User;
 import com.nexa.user.UserRepository;
 import org.springframework.data.domain.PageRequest;
@@ -33,10 +34,13 @@ public class FriendService {
 
     private final FriendshipRepository friendshipRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
-    public FriendService(FriendshipRepository friendshipRepository, UserRepository userRepository) {
+    public FriendService(FriendshipRepository friendshipRepository, UserRepository userRepository,
+                         NotificationService notificationService) {
         this.friendshipRepository = friendshipRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     /** Ismerőskérés küldése egy másik felhasználónak. */
@@ -60,6 +64,8 @@ public class FriendService {
         });
 
         friendshipRepository.save(new Friendship(requester, target));
+        // Valós idejű + perzisztált értesítés a címzettnek (#17).
+        notificationService.notifyFriendRequest(requester, targetId);
     }
 
     /** Egy beérkezett kérés elfogadása — csak a címzett teheti. */
@@ -67,6 +73,8 @@ public class FriendService {
     public void acceptRequest(UUID userId, UUID requestId) {
         Friendship request = loadIncomingPending(userId, requestId);
         request.accept(Instant.now());
+        // Az eredeti kérelmezőt értesítjük; az aktor az elfogadó (a címzett) (#17).
+        notificationService.notifyFriendAccepted(request.getAddressee(), request.getRequester().getId());
     }
 
     /**

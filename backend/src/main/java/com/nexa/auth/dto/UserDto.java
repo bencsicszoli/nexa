@@ -4,7 +4,11 @@ import com.nexa.user.User;
 
 import java.time.Instant;
 
-/** A frontendnek visszaadott felhasználói adat (jelszó-hash nélkül). */
+/**
+ * A frontendnek visszaadott felhasználói adat (jelszó-hash nélkül). A {@code locale} és a
+ * {@code totpEnabled} (#17) additív mezők: a bejelentkezés/{@code /auth/me} ezekkel állítja be
+ * a felület nyelvét és jelzi a 2FA állapotát.
+ */
 public record UserDto(
         String id,
         String email,
@@ -12,6 +16,8 @@ public record UserDto(
         String bio,
         String avatarUrl,
         String role,
+        String locale,
+        boolean totpEnabled,
         Instant createdAt) {
 
     public static UserDto from(User user) {
@@ -22,6 +28,8 @@ public record UserDto(
                 user.getBio(),
                 user.getAvatarUrl(),
                 user.getRole().name(),
+                user.getLocale(),
+                user.isTotpEnabled(),
                 user.getCreatedAt());
     }
 }

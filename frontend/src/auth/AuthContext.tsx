@@ -1,20 +1,25 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import i18n, { SUPPORTED_LANGUAGES, type Language } from '../i18n'
 import { AUTH_LOGOUT_EVENT } from '../lib/api'
 import { getRefreshToken } from './tokenStore'
 import {
   fetchMe,
   loginRequest,
+  loginWith2faRequest,
   logoutRequest,
   registerRequest,
 } from './authApi'
-import type { User } from './types'
+import type { LoginResult, User } from './types'
 
 type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated'
 
 type AuthContextValue = {
   user: User | null
   status: AuthStatus
-  login: (email: string, password: string) => Promise<void>
+  /** Bejelentkezés; 2FA-nál a kimenet jelzi, hogy challenge tokennel kell folytatni. */
+  login: (email: string, password: string) => Promise<LoginResult>
+  /** A kétlépcsős login befejezése a challenge tokennel + 2FA kóddal. */
+  loginWith2fa: (challengeToken: string, code: string) => Promise<void>
   register: (email: string, displayName: string, password: string) => Promise<void>
   logout: () => Promise<void>
   /** A bejelentkezett felhasználó adatainak frissítése (pl. profilszerkesztés után). */
@@ -22,6 +27,14 @@ type AuthContextValue = {
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
+
+/** A belépő felhasználó nyelvét tesszük az igazsággá: a UI nyelve + a mentett választás követi (#17). */
+function applyUserLocale(user: User) {
+  const locale = user.locale
+  if (locale && (SUPPORTED_LANGUAGES as readonly string[]).includes(locale) && i18n.language !== locale) {
+    void i18n.changeLanguage(locale as Language)
+  }
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
@@ -39,6 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .then((me) => {
         if (!active) return
         setUser(me)
+        applyUserLocale(me)
         setStatus('authenticated')
       })
       .catch(() => {
@@ -66,13 +80,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       status,
       login: async (email, password) => {
-        const res = await loginRequest(email, password)
-        setUser(res.user)
+        const result = await loginRequest(email, password)
+        if (result.kind === 'authenticated') {
+          setUser(result.user)
+          applyUserLocale(result.user)
+          setStatus('authenticated')
+        }
+        return result
+      },
+      loginWith2fa: async (challengeToken, code) => {
+        const loggedIn = await loginWith2faRequest(challengeToken, code)
+        setUser(loggedIn)
+        applyUserLocale(loggedIn)
         setStatus('authenticated')
       },
       register: async (email, displayName, password) => {
         const res = await registerRequest(email, displayName, password)
         setUser(res.user)
+        applyUserLocale(res.user)
         setStatus('authenticated')
       },
       logout: async () => {

@@ -1,22 +1,27 @@
-// A backend valós idejű értesítése (lásd com.nexa.realtime.dto.NotificationDto).
-// Egyelőre egyféle típus: új bejegyzés egy kapcsolattól.
+// A backend perzisztált + valós idejű értesítése (lásd com.nexa.realtime.dto.NotificationDto, #17).
 
-export type NotificationType = 'NEW_POST'
+export type NotificationType =
+  | 'NEW_POST'
+  | 'FRIEND_REQUEST'
+  | 'FRIEND_ACCEPTED'
+  | 'NEW_FOLLOWER'
 
 export type NexaNotification = {
-  /** Az értesítés egyedi azonosítója (a backend generálja; React-kulcsként is használjuk). */
+  /** Az értesítés azonosítója (a perzisztált entitás id-ja; olvasott-jelöléshez és kulcsként is). */
   id: string
   type: NotificationType
-  /** Az új bejegyzés azonosítója. */
-  postId: string
-  /** A bejegyzés szerzője. */
+  /** Új bejegyzésnél a poszt azonosítója; kapcsolati típusoknál null. */
+  postId: string | null
+  /** Az aktor (a poszt szerzője / a kérelmező / a követő). */
   actorId: string
   actorName: string
   actorAvatarUrl: string | null
-  /** Csoport-bejegyzésnél a forráscsoport; profil-posztnál null. */
+  /** Csoport-bejegyzésnél a forráscsoport; egyébként null. */
   groupId: string | null
   groupName: string | null
   groupLogoUrl: string | null
   /** ISO-8601 időbélyeg. */
   createdAt: string
+  /** Olvasott-e már. */
+  read: boolean
 }

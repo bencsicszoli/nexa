@@ -273,7 +273,8 @@ public class ChatService {
             title = other.getDisplayName();
             imageUrl = other.getAvatarUrl();
             otherUserId = other.getId().toString();
-            online = presenceService.isOnline(other.getId());
+            // Aki elrejti a jelenlétét (#17), sosem látszik onlinenak; egyébként a valós állapot.
+            online = !other.isHidePresence() && presenceService.isOnline(other.getId());
         } else {
             Group group = c.getGroup();
             title = group.getName();

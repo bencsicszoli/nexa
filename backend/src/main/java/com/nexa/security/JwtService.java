@@ -35,6 +35,10 @@ public class JwtService {
         this.accessTokenTtlSeconds = accessTokenTtlSeconds;
     }
 
+    /** A kétlépcsős login köztes (challenge) tokenjének típusjelzője és élettartama (#17). */
+    private static final String CHALLENGE_TYPE = "2fa_challenge";
+    private static final long CHALLENGE_TTL_SECONDS = 300; // 5 perc
+
     /** Access token a felhasználónak: subject = userId, plusz email és role claim. */
     public String generateAccessToken(User user) {
         Instant now = Instant.now();
@@ -48,9 +52,41 @@ public class JwtService {
                 .compact();
     }
 
-    /** A tokenből kinyert felhasználó-azonosító, vagy kivétel, ha érvénytelen/lejárt. */
+    /**
+     * Rövid életű challenge token a kétlépcsős loginhoz (#17): a jelszó már stimmelt, de a
+     * 2FA kód még hátravan. A {@code typ=2fa_challenge} claim miatt ez NEM használható access
+     * tokenként (lásd {@link #extractUserId} és a {@code JwtAuthenticationFilter}).
+     */
+    public String generate2faChallengeToken(UUID userId) {
+        Instant now = Instant.now();
+        return Jwts.builder()
+                .subject(userId.toString())
+                .claim("typ", CHALLENGE_TYPE)
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(now.plusSeconds(CHALLENGE_TTL_SECONDS)))
+                .signWith(key)
+                .compact();
+    }
+
+    /** A challenge tokenből kinyert userId; kivétel, ha nem challenge típusú, érvénytelen vagy lejárt. */
+    public UUID extract2faChallengeUserId(String token) {
+        Claims claims = parse(token);
+        if (!CHALLENGE_TYPE.equals(claims.get("typ", String.class))) {
+            throw new IllegalArgumentException("Not a 2FA challenge token");
+        }
+        return UUID.fromString(claims.getSubject());
+    }
+
+    /**
+     * A (access) tokenből kinyert felhasználó-azonosító, vagy kivétel, ha érvénytelen/lejárt.
+     * A {@code 2fa_challenge} típusú tokent <b>elutasítja</b> — az csak a {@code /login/2fa}-ra jó.
+     */
     public UUID extractUserId(String token) {
-        return UUID.fromString(parse(token).getSubject());
+        Claims claims = parse(token);
+        if (CHALLENGE_TYPE.equals(claims.get("typ", String.class))) {
+            throw new IllegalArgumentException("2FA challenge token is not a valid access token");
+        }
+        return UUID.fromString(claims.getSubject());
     }
 
     public long getAccessTokenTtlSeconds() {

@@ -2,6 +2,7 @@ package com.nexa.follow;
 
 import com.nexa.common.ApiException;
 import com.nexa.follow.dto.FollowUserDto;
+import com.nexa.realtime.NotificationService;
 import com.nexa.user.User;
 import com.nexa.user.UserRepository;
 import org.springframework.stereotype.Service;
@@ -22,10 +23,13 @@ public class FollowService {
 
     private final FollowRepository followRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
-    public FollowService(FollowRepository followRepository, UserRepository userRepository) {
+    public FollowService(FollowRepository followRepository, UserRepository userRepository,
+                         NotificationService notificationService) {
         this.followRepository = followRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     /** Egy felhasználó követése (idempotens — ha már követi, nem történik semmi). */
@@ -40,6 +44,8 @@ public class FollowService {
         }
         User follower = userRepository.findById(followerId).orElseThrow(ApiException::userNotFound);
         followRepository.save(new Follow(follower, followee));
+        // Csak az új követésnél értesítünk (a már-követi ág fent kilép) (#17).
+        notificationService.notifyNewFollower(follower, followeeId);
     }
 
     /** Egy felhasználó lekövetése (idempotens — ha nem követi, nem történik semmi). */
