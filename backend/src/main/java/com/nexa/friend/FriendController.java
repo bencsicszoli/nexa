@@ -4,6 +4,7 @@ import com.nexa.friend.dto.FriendDto;
 import com.nexa.friend.dto.FriendRequestsDto;
 import com.nexa.friend.dto.SendFriendRequestRequest;
 import com.nexa.friend.dto.UserSummaryDto;
+import com.nexa.subscription.SubscriptionRequired;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -58,6 +59,7 @@ public class FriendController {
     /** Ismerőskérés küldése egy másik felhasználónak. */
     @PostMapping("/requests")
     @ResponseStatus(HttpStatus.CREATED)
+    @SubscriptionRequired
     public void sendRequest(
             @AuthenticationPrincipal UUID userId,
             @Valid @RequestBody SendFriendRequestRequest request) {
@@ -67,6 +69,7 @@ public class FriendController {
     /** Egy beérkezett kérés elfogadása. */
     @PostMapping("/requests/{requestId}/accept")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @SubscriptionRequired
     public void accept(@AuthenticationPrincipal UUID userId, @PathVariable UUID requestId) {
         friendService.acceptRequest(userId, requestId);
     }

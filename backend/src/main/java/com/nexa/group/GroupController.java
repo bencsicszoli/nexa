@@ -8,6 +8,7 @@ import com.nexa.group.dto.GroupMemberDto;
 import com.nexa.post.dto.CreatePostRequest;
 import com.nexa.post.dto.PostDto;
 import com.nexa.storage.PresignedUpload;
+import com.nexa.subscription.SubscriptionRequired;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -42,6 +43,7 @@ public class GroupController {
     /** Új csoport létrehozása. */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @SubscriptionRequired
     public GroupDto create(
             @AuthenticationPrincipal UUID userId,
             @Valid @RequestBody CreateGroupRequest request) {
@@ -50,6 +52,7 @@ public class GroupController {
 
     /** Aláírt feltöltési cél a csoport logójához (a létrehozás előtt). */
     @PostMapping("/logo/upload-url")
+    @SubscriptionRequired
     public PresignedUpload logoUploadUrl(@Valid @RequestBody GroupLogoUploadRequest request) {
         return groupService.createLogoUpload(request.contentType());
     }
@@ -82,6 +85,7 @@ public class GroupController {
 
     /** Csatlakozás egy csoporthoz (idempotens). */
     @PostMapping("/{groupId}/join")
+    @SubscriptionRequired
     public GroupDto join(@AuthenticationPrincipal UUID userId, @PathVariable UUID groupId) {
         return groupService.join(userId, groupId);
     }
@@ -138,6 +142,7 @@ public class GroupController {
     /** Bejegyzés írása a csoportba (csak tag). */
     @PostMapping("/{groupId}/posts")
     @ResponseStatus(HttpStatus.CREATED)
+    @SubscriptionRequired
     public PostDto createPost(
             @AuthenticationPrincipal UUID userId,
             @PathVariable UUID groupId,

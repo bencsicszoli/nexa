@@ -293,10 +293,21 @@
     "manage": "Manage subscription",
     "opening": "Opening…",
     "trialNote": "14-day free trial · card required · cancel anytime",
+    "trialNoteDemo": "Demo mode · the trial starts instantly, no card or payment needed",
+    "demoMode": "Demo mode — subscription managed via the dev panel.",
     "notConfigured": "Subscriptions are not available right now. Please try again later.",
     "loadError": "Couldn't load your subscription.",
     "retry": "Try again",
     "checkoutFailed": "Couldn't open the checkout. Please try again."
+  },
+  "paywall": {
+    "title": "Nexa Premium",
+    "neverSubscribed": "Subscribe to unlock your feed, posting, chat and calls — no ads, ever.",
+    "lapsedTrial": "Your free trial has ended. Subscribe to keep using Nexa.",
+    "canceled": "Your subscription has ended. Resubscribe to keep using Nexa.",
+    "paused": "Your subscription is paused. Resume it to keep using Nexa.",
+    "cta": "Go to subscription",
+    "note": "Reads your own profile and billing stay available."
   },
   "lang": {
     "switchTo": "Switch to {{lang}}",
@@ -361,6 +372,7 @@
       "INVALID_COMMENT_PARENT": "The parent comment does not belong to this post.",
       "SUBSCRIPTION_NOT_CONFIGURED": "Subscriptions are not available right now. Please try again later.",
       "NO_SUBSCRIPTION": "You don't have a subscription yet.",
+      "SUBSCRIPTION_REQUIRED": "This needs an active subscription or trial. Subscribe to continue.",
       "NETWORK": "Could not reach the server. Please try again.",
       "UNKNOWN_ERROR": "Something went wrong. Please try again."
     }

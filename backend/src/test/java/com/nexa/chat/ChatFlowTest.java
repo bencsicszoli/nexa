@@ -51,7 +51,10 @@ class ChatFlowTest {
         String body = """
                 {"email":"%s","displayName":"%s","password":"supersecret"}""".formatted(email, name);
         JsonNode node = postJson("/api/auth/register", body, null);
-        return new String[]{node.get("accessToken").asText(), node.get("user").get("id").asText()};
+        String token = node.get("accessToken").asText();
+        // Gating (#15): a teszt-userek aktív előfizetést kapnak a premium végpontokhoz.
+        postJson("/api/dev/subscription", "{\"status\":\"ACTIVE\"}", token);
+        return new String[]{token, node.get("user").get("id").asText()};
     }
 
     private JsonNode postJson(String path, String body, String token) {

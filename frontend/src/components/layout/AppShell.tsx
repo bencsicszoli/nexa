@@ -12,6 +12,8 @@ import { ChatProvider } from '../../chat/ChatContext'
 import { CallProvider } from '../../call/CallContext'
 import CallOverlay from '../../call/CallOverlay'
 import NotificationToaster from '../NotificationToaster'
+import RequireSubscription from '../../subscription/RequireSubscription'
+import DevSubscriptionPanel from '../../subscription/DevSubscriptionPanel'
 
 // Az "A" (3 oszlopos) elrendezés: bal navigáció · középső tartalom · jobb sáv.
 // Reszponzív viselkedés:
@@ -38,9 +40,11 @@ export default function AppShell() {
           </div>
         </aside>
 
-        {/* Középső tartalom */}
+        {/* Középső tartalom — előfizetés-gating mögött (#15); a /billing kivétel */}
         <main className="min-w-0 flex-1">
-          <Outlet />
+          <RequireSubscription>
+            <Outlet />
+          </RequireSubscription>
         </main>
 
         {/* Jobb sáv — xl-től felfelé */}
@@ -81,6 +85,10 @@ export default function AppShell() {
 
       {/* Videohívás teljes képernyős felülete (#13) — bárhol a felületen megjelenik */}
       <CallOverlay />
+
+      {/* Dev/demo: előfizetés-állapot kapcsoló (#15) — csak dev-buildben és ha a backend dev-flag aktív;
+          a paywallon kívül, hogy állapotváltáshoz mindig elérhető legyen */}
+      <DevSubscriptionPanel />
     </div>
     </CallProvider>
     </ChatProvider>

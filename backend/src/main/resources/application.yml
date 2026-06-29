@@ -49,6 +49,10 @@ nexa:
     turn-username: ${WEBRTC_TURN_USERNAME:}
     turn-credential: ${WEBRTC_TURN_CREDENTIAL:}
   payment:
+    # Fejlesztői/demo előfizetés-vezérlők (#15). Bekapcsolva (PAYMENT_DEV_CONTROLS=true) elérhető a
+    # /api/dev/subscription végpont, amivel élő Paddle nélkül állítható az előfizetés-állapot a paywall
+    # demózásához. Élesben KÖTELEZŐEN false (a bean ilyenkor létre sem jön → a route 404).
+    dev-controls: ${PAYMENT_DEV_CONTROLS:false}
     # Paddle előfizetés (#14). Sandboxban fejlesztünk/tesztelünk — éles: PADDLE_ENV=production
     # és a production-api.paddle.com. A kártyaadat sosem érinti a szervert (Paddle hosztolt checkout).
     paddle:

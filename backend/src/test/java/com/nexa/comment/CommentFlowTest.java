@@ -2,6 +2,7 @@ package com.nexa.comment;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nexa.support.TestSubscriptions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -34,8 +35,10 @@ class CommentFlowTest {
                                 .formatted(email, name)))
                 .andExpect(status().isCreated())
                 .andReturn();
-        return "Bearer " + objectMapper.readTree(result.getResponse().getContentAsString())
+        String authHeader = "Bearer " + objectMapper.readTree(result.getResponse().getContentAsString())
                 .get("accessToken").asText();
+        TestSubscriptions.grantActive(mockMvc, authHeader);
+        return authHeader;
     }
 
     private String profilePost(String auth, String content) throws Exception {

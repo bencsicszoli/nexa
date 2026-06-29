@@ -1,15 +1,14 @@
-import { apiFetch } from '../lib/api'
+import { apiFetch, SUBSCRIPTION_CHANGED_EVENT } from '../lib/api'
 import type { CheckoutInfo, Subscription } from './types'
 
 // A backend /api/subscriptions végpontjai (lásd com.nexa.subscription.SubscriptionController).
 
 /**
- * Az előfizetés állapota megváltozott (sikeres checkout után). A Billing oldal és a
- * jobb sáv „Premium" kártyája erre frissül — ugyanaz a minta, mint a GROUPS_CHANGED_EVENT.
- * Mivel az állapotot a Paddle webhook írja (aszinkron), a checkout után többször is
- * elsülhet, hogy a webhook-késleltetést áthidaljuk.
+ * Az előfizetés állapota megváltozott (sikeres checkout után, vagy 402-es paywall-jelzésnél).
+ * A Billing oldal, a jobb sáv „Premium" kártyája és a paywall (#15) erre frissül. Az eseménynév
+ * az api.ts-ben él (a körkörös import elkerülésére); itt re-exportáljuk a meglévő importok kedvéért.
  */
-export const SUBSCRIPTION_CHANGED_EVENT = 'nexa:subscription-changed'
+export { SUBSCRIPTION_CHANGED_EVENT }
 
 export function emitSubscriptionChanged(): void {
   window.dispatchEvent(new Event(SUBSCRIPTION_CHANGED_EVENT))

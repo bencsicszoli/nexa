@@ -2,6 +2,7 @@ package com.nexa.post;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nexa.support.TestSubscriptions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -34,8 +35,10 @@ class PostFlowTest {
                                 {"email":"%s","displayName":"Dana","password":"supersecret"}""".formatted(email)))
                 .andExpect(status().isCreated())
                 .andReturn();
-        return objectMapper.readTree(result.getResponse().getContentAsString())
+        String token = objectMapper.readTree(result.getResponse().getContentAsString())
                 .get("accessToken").asText();
+        TestSubscriptions.grantActive(mockMvc, "Bearer " + token);
+        return token;
     }
 
     @Test

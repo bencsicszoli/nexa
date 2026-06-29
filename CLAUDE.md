@@ -103,7 +103,30 @@ Konvenciók a meglévő vázból (kövesd új kódnál is):
 
 `#1`–`#12` **kész** (váz, app shell+i18n, JWT-auth, profil+avatar, szöveges/médiás bejegyzés,
 ismerősök, követés, csoportok, hírfolyam, valós idejű értesítés, csevegés). `#13` (1:1 videohívás,
-WebRTC) **megvalósítva, böngészős kétfelhasználós tesztre vár**. A következő `#14` (Paddle előfizetés).
+WebRTC) **megvalósítva, böngészős kétfelhasználós tesztre vár**. `#14` (Paddle előfizetés) commitolva
+(a böngészős sandbox-teszt élő Paddle-fiókra vár; a funkciót a webhook-integrációs teszt fedi). `#15`
+(trial/előfizetés gating) **megvalósítva** (lásd lent). A következő `#16` (Keresés).
+
+**Előfizetés-gating (`#15`):** a premium végpontok aktív előfizetést / folyamatban lévő próbaidőt
+igényelnek. A szabály egyetlen forrása a `com.nexa.subscription.SubscriptionAccess` (`ACTIVE`/`PAST_DUE`
+→ hozzáfér; `TRIALING` és `trialEndsAt` a jövőben → hozzáfér; `NONE`/`PAUSED`/`CANCELED`/lejárt trial →
+paywall). A backend egy `@SubscriptionRequired` annotáció + `SubscriptionGuardInterceptor` párral
+érvényesít (a megjelölt controller/metódus hozzáférés nélkül `402 SUBSCRIPTION_REQUIRED`-et ad); gate-elt
+a hírfolyam, poszt/komment/csoportposzt létrehozás, média-feltöltés, chat-szálnyitás/-küldés, hívás
+(`/api/calls`), ismerős-kérés/-elfogadás, követés, csoport-létrehozás/-csatlakozás. NEM gate-elt a
+billing (`/api/subscriptions/**`), a saját profil olvasása és az auth. Friss user `NONE` → azonnal
+paywallt lát (Paddle az igazság forrása, nincs auto-trial). Frontend: `RequireSubscription` az `AppShell`
+fő tartalma körül (a `/billing` kivétel) → teljes képernyős `Paywall`; az `apiFetch` a `402`-re
+`SUBSCRIPTION_CHANGED_EVENT`-et lő, hogy a menet közben lejáró trialnál is felugorjon.
+
+**Dev/demo előfizetés-szimulátor (`#15`):** élő Paddle nélkül is demózható. A `nexa.payment.dev-controls`
+flag (env `PAYMENT_DEV_CONTROLS`, **alap false**, élesben KÖTELEZŐEN false) bekapcsolva létrehozza a
+`DevSubscriptionController`-t (`@ConditionalOnProperty` — kikapcsolva a bean létre sem jön, a route 404):
+`POST /api/dev/subscription {status, trialDaysFromNow}` közvetlenül beírja a hívó előfizetés-állapotát,
+`GET` lekéri. Frontenden a `DevSubscriptionPanel` (csak `import.meta.env.DEV`-ben és ha a backend dev-flag
+él) sarokban lebegő gombokkal vált állapotot. Indítás demóhoz: `PAYMENT_DEV_CONTROLS=true mvn spring-boot:run`.
+A backend-tesztek profilja `dev-controls=true`; a flow-tesztek a `com.nexa.support.TestSubscriptions`-szel
+adnak aktív hozzáférést a regisztrált usernek.
 
 **Videohívás (`#13`):** 1:1 WebRTC-hívás a csevegő-szálból (DIRECT). A jelzés (signaling: SDP/ICE) a
 meglévő STOMP-kapcsolaton megy — a kliens a `/app/call.signal` célra küld, a másik fél a

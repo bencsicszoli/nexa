@@ -25,6 +25,8 @@ nexa:
       secret: ${nexa.jwt.secret}
       upload-ttl-seconds: 300
   payment:
+    # A gating-teszt (#15) ezzel vezérli az előfizetés-állapotot a /api/dev/subscription-ön át.
+    dev-controls: true
     paddle:
       environment: sandbox
       api-base-url: https://sandbox-api.paddle.com

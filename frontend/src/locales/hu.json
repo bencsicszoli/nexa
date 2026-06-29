@@ -293,10 +293,21 @@
     "manage": "Előfizetés kezelése",
     "opening": "Megnyitás…",
     "trialNote": "14 napos ingyenes próbaidő · kártya szükséges · bármikor lemondható",
+    "trialNoteDemo": "Demó mód · a próbaidő azonnal elindul, kártya és fizetés nélkül",
+    "demoMode": "Demó mód — az előfizetés a dev-panelről kezelhető.",
     "notConfigured": "Az előfizetés jelenleg nem elérhető. Kérlek próbáld újra később.",
     "loadError": "Nem sikerült betölteni az előfizetésed.",
     "retry": "Újra",
     "checkoutFailed": "Nem sikerült megnyitni a fizetést. Próbáld újra."
+  },
+  "paywall": {
+    "title": "Nexa Premium",
+    "neverSubscribed": "Fizess elő a hírfolyam, posztolás, csevegés és hívás eléréséhez — reklámok nélkül, örökre.",
+    "lapsedTrial": "A próbaidőd lejárt. Fizess elő, hogy tovább használhasd a Nexát.",
+    "canceled": "Az előfizetésed megszűnt. Fizess elő újra a Nexa használatához.",
+    "paused": "Az előfizetésed szünetel. Folytasd a Nexa használatához.",
+    "cta": "Tovább az előfizetéshez",
+    "note": "A saját profilod és a számlázás továbbra is elérhető marad."
   },
   "lang": {
     "switchTo": "Váltás erre: {{lang}}",
@@ -361,6 +372,7 @@
       "INVALID_COMMENT_PARENT": "A szülő hozzászólás nem ehhez a bejegyzéshez tartozik.",
       "SUBSCRIPTION_NOT_CONFIGURED": "Az előfizetés jelenleg nem elérhető. Kérlek próbáld újra később.",
       "NO_SUBSCRIPTION": "Még nincs előfizetésed.",
+      "SUBSCRIPTION_REQUIRED": "Ehhez aktív előfizetés vagy próbaidő szükséges. Fizess elő a folytatáshoz.",
       "NETWORK": "Nem sikerült elérni a szervert. Próbáld újra.",
       "UNKNOWN_ERROR": "Hiba történt. Próbáld újra."
     }

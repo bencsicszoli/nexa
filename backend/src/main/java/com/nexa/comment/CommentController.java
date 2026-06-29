@@ -3,6 +3,7 @@ package com.nexa.comment;
 import com.nexa.comment.dto.CommentDto;
 import com.nexa.comment.dto.CreateCommentRequest;
 import com.nexa.comment.dto.UpdateCommentRequest;
+import com.nexa.subscription.SubscriptionRequired;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -41,6 +42,7 @@ public class CommentController {
     /** Új hozzászólás vagy válasz egy bejegyzéshez. */
     @PostMapping("/api/posts/{postId}/comments")
     @ResponseStatus(HttpStatus.CREATED)
+    @SubscriptionRequired
     public CommentDto create(
             @AuthenticationPrincipal UUID userId,
             @PathVariable UUID postId,

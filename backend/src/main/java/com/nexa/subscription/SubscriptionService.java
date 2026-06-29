@@ -55,6 +55,18 @@ public class SubscriptionService {
                 .orElseGet(SubscriptionDto::none);
     }
 
+    /**
+     * Van-e a felhasználónak hozzáférése (aktív előfizetés vagy folyamatban lévő próbaidő)?
+     * A gating-guard ({@link SubscriptionGuardInterceptor}) ezt hívja. Sor hiányában (NONE)
+     * nincs hozzáférés. A szabály egyetlen forrása: {@link SubscriptionAccess}.
+     */
+    @Transactional(readOnly = true)
+    public boolean hasAccess(UUID userId) {
+        return subscriptionRepository.findByUserId(userId)
+                .map(s -> SubscriptionAccess.hasAccess(s.getStatus(), s.getTrialEndsAt(), Instant.now()))
+                .orElse(false);
+    }
+
     /** A frontend overlay-checkouthoz szükséges (nem titkos) adatok. */
     @Transactional(readOnly = true)
     public CheckoutInfoDto checkoutInfo(UUID userId) {

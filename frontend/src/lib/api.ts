@@ -27,6 +27,11 @@ export class ApiError extends Error {
 // hogy állítsa "kijelentkezett" állapotra a UI-t.
 export const AUTH_LOGOUT_EVENT = 'nexa:auth-logout'
 
+// Az előfizetés-állapot megváltozott — a useSubscription erre újratölt (paywall #15, checkout #14).
+// Itt definiáljuk (az AUTH_LOGOUT_EVENT mellett), hogy az apiFetch 402-kezelése ne hozzon létre
+// körkörös importot a subscriptionApi-val; az utóbbi innen re-exportálja.
+export const SUBSCRIPTION_CHANGED_EVENT = 'nexa:subscription-changed'
+
 function emitLogout(): void {
   window.dispatchEvent(new Event(AUTH_LOGOUT_EVENT))
 }
@@ -109,6 +114,11 @@ export async function apiFetch<T>(path: string, opts: ApiOptions = {}): Promise<
       body = { code: res.status === 401 ? 'UNAUTHENTICATED' : 'UNKNOWN_ERROR' }
     }
     if (res.status === 401 && useAuth) emitLogout()
+    // Paywall (#15): ha menet közben jár le a hozzáférés (pl. trial), frissítsük az
+    // előfizetés-állapotot, hogy a RequireSubscription azonnal kitegye a paywallt.
+    if (res.status === 402 && body.code === 'SUBSCRIPTION_REQUIRED') {
+      window.dispatchEvent(new Event(SUBSCRIPTION_CHANGED_EVENT))
+    }
     throw new ApiError(res.status, body)
   }
 

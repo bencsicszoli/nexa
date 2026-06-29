@@ -5,6 +5,7 @@ import com.nexa.chat.dto.ConversationDto;
 import com.nexa.chat.dto.MessagesPageDto;
 import com.nexa.chat.dto.PostMessageRequest;
 import com.nexa.chat.dto.StartDirectRequest;
+import com.nexa.subscription.SubscriptionRequired;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -44,6 +45,7 @@ public class ChatController {
 
     /** Kétszemélyes szál megnyitása/létrehozása egy másik felhasználóval. */
     @PostMapping("/conversations/direct")
+    @SubscriptionRequired
     public ConversationDto startDirect(
             @AuthenticationPrincipal UUID userId,
             @Valid @RequestBody StartDirectRequest request) {
@@ -52,6 +54,7 @@ public class ChatController {
 
     /** Egy csoport csevegő-szálának megnyitása/létrehozása (csak tagnak). */
     @PostMapping("/conversations/group/{groupId}")
+    @SubscriptionRequired
     public ConversationDto openGroup(
             @AuthenticationPrincipal UUID userId,
             @PathVariable UUID groupId) {
@@ -71,6 +74,7 @@ public class ChatController {
     /** Üzenetküldés REST-en (megbízható tartalék a STOMP mellé). */
     @PostMapping("/conversations/{id}/messages")
     @ResponseStatus(HttpStatus.CREATED)
+    @SubscriptionRequired
     public ChatMessageDto send(
             @AuthenticationPrincipal UUID userId,
             @PathVariable UUID id,

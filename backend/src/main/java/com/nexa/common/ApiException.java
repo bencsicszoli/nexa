@@ -235,4 +235,15 @@ public class ApiException extends RuntimeException {
         return new ApiException(HttpStatus.NOT_FOUND, "NO_SUBSCRIPTION",
                 "You do not have a subscription yet.");
     }
+
+    // --- Előfizetés-gating (#15) ---
+
+    /**
+     * A művelethez aktív előfizetés vagy folyamatban lévő próbaidő kell, de a hívónak
+     * nincs (paywall). {@code 402 Payment Required} — a frontend ezt paywallra fordítja.
+     */
+    public static ApiException subscriptionRequired() {
+        return new ApiException(HttpStatus.PAYMENT_REQUIRED, "SUBSCRIPTION_REQUIRED",
+                "An active subscription or trial is required.");
+    }
 }

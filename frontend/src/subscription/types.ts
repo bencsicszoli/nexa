@@ -17,6 +17,8 @@ export type Subscription = {
   trialEndsAt: string | null
   renewsAt: string | null
   canceledAt: string | null
+  /** Van-e hozzáférése (aktív előfizetés/folyamatban lévő próbaidő) — a backend szabálya (#15). */
+  hasAccess: boolean
 }
 
 /** A Paddle overlay-checkout indításához szükséges (nem titkos) adatok. */

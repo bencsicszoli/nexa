@@ -4,7 +4,9 @@ import { Check, CreditCard, Loader2, Sparkles } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
 import { ApiError } from '../lib/api'
 import { useSubscription } from '../subscription/useSubscription'
-import { getCheckoutInfo, openPortal } from '../subscription/subscriptionApi'
+import { useDevControls } from '../subscription/useDevControls'
+import { getCheckoutInfo, openPortal, emitSubscriptionChanged } from '../subscription/subscriptionApi'
+import { setDevSubscription } from '../subscription/devSubscriptionApi'
 import { openCheckout } from '../subscription/paddle'
 import type { SubscriptionPlan, SubscriptionStatus } from '../subscription/types'
 
@@ -19,6 +21,9 @@ export default function BillingPage() {
   const { t, i18n } = useTranslation()
   const { user } = useAuth()
   const { subscription, loading, error, refresh } = useSubscription()
+  // Demó mód: ha a backend dev-vezérlői élnek, a gombok a dev-szimulátoron mennek (nincs valódi
+  // Paddle-checkout/portál) — így a teljes út bemutatható élő Paddle nélkül, hibaüzenet nélkül.
+  const { enabled: demo } = useDevControls()
 
   const [busyPlan, setBusyPlan] = useState<SubscriptionPlan | null>(null)
   const [managing, setManaging] = useState(false)
@@ -39,8 +44,14 @@ export default function BillingPage() {
     setBusyPlan(plan)
     setMessage(null)
     try {
-      const info = await getCheckoutInfo()
-      await openCheckout(info, plan, user.id)
+      if (demo) {
+        // Demó: valódi Paddle helyett 14 napos próbaidőt szimulálunk; az app azonnal feloldódik.
+        await setDevSubscription('TRIALING', 14, plan)
+        emitSubscriptionChanged()
+      } else {
+        const info = await getCheckoutInfo()
+        await openCheckout(info, plan, user.id)
+      }
     } catch (err) {
       setMessage(errorMessage(err, t('billing.checkoutFailed')))
     } finally {
@@ -125,7 +136,7 @@ export default function BillingPage() {
             )}
             {status === 'NONE' && <p className="text-sm text-slate-600">{t('billing.noSubHint')}</p>}
 
-            {hasBilling && (
+            {hasBilling && !demo && (
               <div>
                 <button
                   type="button"
@@ -142,6 +153,9 @@ export default function BillingPage() {
                 </button>
               </div>
             )}
+            {hasBilling && demo && (
+              <p className="text-xs text-slate-400">{t('billing.demoMode')}</p>
+            )}
           </div>
         )}
       </section>
@@ -150,7 +164,9 @@ export default function BillingPage() {
       {!loading && !error && canCheckout && (
         <section className="rounded-2xl border border-slate-200 bg-white p-6">
           <h2 className="text-base font-semibold text-slate-900">{t('billing.choosePlan')}</h2>
-          <p className="mt-1 text-xs text-slate-500">{t('billing.trialNote')}</p>
+          <p className="mt-1 text-xs text-slate-500">
+            {t(demo ? 'billing.trialNoteDemo' : 'billing.trialNote')}
+          </p>
 
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <PlanCard

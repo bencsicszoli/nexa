@@ -1,6 +1,7 @@
 package com.nexa.follow;
 
 import com.nexa.follow.dto.FollowUserDto;
+import com.nexa.subscription.SubscriptionRequired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -44,6 +45,7 @@ public class FollowController {
     /** Egy felhasználó követése (idempotens). */
     @PutMapping("/{userId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @SubscriptionRequired
     public void follow(
             @AuthenticationPrincipal UUID userId,
             @PathVariable("userId") UUID followeeId) {

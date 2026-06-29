@@ -2,6 +2,7 @@ package com.nexa.group;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nexa.support.TestSubscriptions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -34,7 +35,9 @@ class GroupFlowTest {
                 .andExpect(status().isCreated())
                 .andReturn();
         JsonNode body = objectMapper.readTree(result.getResponse().getContentAsString());
-        return body.get("accessToken").asText();
+        String token = body.get("accessToken").asText();
+        TestSubscriptions.grantActive(mockMvc, "Bearer " + token);
+        return token;
     }
 
     /** Létrehoz egy csoportot a megadott tokennel, és visszaadja az azonosítóját. */

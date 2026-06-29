@@ -5,6 +5,7 @@ import com.nexa.post.dto.PostDto;
 import com.nexa.post.dto.PostMediaUploadRequest;
 import com.nexa.post.dto.UpdatePostRequest;
 import com.nexa.storage.PresignedUpload;
+import com.nexa.subscription.SubscriptionRequired;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -38,6 +39,7 @@ public class PostController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @SubscriptionRequired
     public PostDto create(
             @AuthenticationPrincipal UUID userId,
             @Valid @RequestBody CreatePostRequest request) {
@@ -46,6 +48,7 @@ public class PostController {
 
     /** Aláírt feltöltési cél egy poszthoz csatolandó kép/videó számára. */
     @PostMapping("/media/upload-url")
+    @SubscriptionRequired
     public PresignedUpload mediaUploadUrl(@Valid @RequestBody PostMediaUploadRequest request) {
         return postService.createMediaUpload(request.contentType());
     }
@@ -64,6 +67,7 @@ public class PostController {
 
     /** Egy saját bejegyzés szövegének szerkesztése (a média változatlan). */
     @PatchMapping("/{id}")
+    @SubscriptionRequired
     public PostDto update(
             @AuthenticationPrincipal UUID userId,
             @PathVariable UUID id,
@@ -74,6 +78,7 @@ public class PostController {
     /** Egy saját bejegyzés törlése. */
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @SubscriptionRequired
     public void delete(@AuthenticationPrincipal UUID userId, @PathVariable UUID id) {
         postService.delete(userId, id);
     }
