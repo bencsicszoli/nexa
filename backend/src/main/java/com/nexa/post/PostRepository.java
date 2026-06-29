@@ -58,4 +58,24 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
                              @Param("beforeCreatedAt") Instant beforeCreatedAt,
                              @Param("beforeId") UUID beforeId,
                              Pageable pageable);
+
+    /**
+     * Bejegyzés-keresés (#16) a szövegtöredékre, kis/nagybetűtől függetlenül, legfrissebb felül.
+     * Adatvédelmi szűrés: csak olyan poszt jelenhet meg, ami a hívónak amúgy is látható —
+     * profil-poszt ({@code group is null}), publikus csoport posztja, vagy a hívó
+     * tag-csoportjának posztja. Így privát csoport bejegyzése sosem szivárog ki a keresőben.
+     * A {@code myGroupIds} sosem üres (a hívó nil-UUID-vel tölti, mint a hírfolyamnál).
+     */
+    @Query("""
+            select p from Post p left join p.group g
+            where lower(p.content) like lower(concat('%', :q, '%'))
+              and (g is null
+                or g.visibility = :publicVisibility
+                or g.id in :myGroupIds)
+            order by p.createdAt desc, p.id desc
+            """)
+    List<Post> search(@Param("q") String q,
+                      @Param("myGroupIds") Collection<UUID> myGroupIds,
+                      @Param("publicVisibility") com.nexa.group.GroupVisibility publicVisibility,
+                      Pageable pageable);
 }

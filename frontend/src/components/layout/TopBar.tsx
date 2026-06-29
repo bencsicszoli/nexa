@@ -1,5 +1,6 @@
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Home, Menu, MessageCircle, Search } from 'lucide-react'
 import LanguageSwitcher from '../LanguageSwitcher'
 import UserMenu from './UserMenu'
@@ -14,6 +15,27 @@ type TopBarProps = {
 export default function TopBar({ onOpenMenu }: TopBarProps) {
   const { t } = useTranslation()
   const { totalUnread } = useChat()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const [params] = useSearchParams()
+
+  // A globális kereső a /search oldalra navigál a ?q paraméterrel; az oldal erre fut keresést.
+  const onSearchPage = location.pathname === '/search'
+  const [term, setTerm] = useState('')
+
+  // A mezőt a ?q-val szinkronban tartjuk, amíg a keresőoldalon vagyunk (pl. visszalépés a
+  // history-ban) — más oldalra navigálva a mezőt kiürítjük, hogy a placeholder látszódjon.
+  useEffect(() => {
+    setTerm(onSearchPage ? (params.get('q') ?? '') : '')
+  }, [onSearchPage, params])
+
+  function onSearchChange(value: string) {
+    setTerm(value)
+    const q = value.trim()
+    const next = q ? `/search?q=${encodeURIComponent(q)}` : '/search'
+    // A keresőoldalon belüli gépelés ne szemetelje tele a history-t (replace).
+    navigate(next, { replace: onSearchPage })
+  }
 
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white">
@@ -37,14 +59,24 @@ export default function TopBar({ onOpenMenu }: TopBarProps) {
         </Link>
 
         {/* Kereső */}
-        <div className="relative mx-auto w-full max-w-xl">
+        <form
+          role="search"
+          className="relative mx-auto w-full max-w-xl"
+          onSubmit={(e) => {
+            e.preventDefault()
+            onSearchChange(term)
+          }}
+        >
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             type="search"
+            value={term}
+            onChange={(e) => onSearchChange(e.target.value)}
             placeholder={t('topbar.searchPlaceholder')}
+            aria-label={t('topbar.searchPlaceholder')}
             className="w-full rounded-full border border-slate-200 bg-slate-50 py-2 pl-9 pr-4 text-sm outline-none transition-colors placeholder:text-slate-400 focus:border-brand focus:bg-white"
           />
-        </div>
+        </form>
 
         {/* Jobb oldali ikonsor */}
         <div className="flex shrink-0 items-center gap-1 sm:gap-2">

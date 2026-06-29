@@ -22,6 +22,20 @@
     "myGroups": "Csoportjaim",
     "newFriendRequests": "{{count}} új ismerőskérés"
   },
+  "search": {
+    "title": "Keresés",
+    "subtitle": "Keress felhasználókat, csoportokat és bejegyzéseket.",
+    "empty": "Kezdj el gépelni a fenti keresőmezőbe.",
+    "resultsFor": "Találatok erre: „{{query}}”",
+    "noResults": "Nincs találat erre: „{{query}}”.",
+    "noResultsType": "Ehhez a típushoz nincs találat.",
+    "tab": {
+      "all": "Mind",
+      "people": "Emberek",
+      "groups": "Csoportok",
+      "posts": "Bejegyzések"
+    }
+  },
   "composer": {
     "placeholder": "Mi jár a fejedben?",
     "photo": "Fotó",

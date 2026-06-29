@@ -22,6 +22,20 @@
     "myGroups": "My groups",
     "newFriendRequests": "{{count}} new friend requests"
   },
+  "search": {
+    "title": "Search",
+    "subtitle": "Find people, groups and posts.",
+    "empty": "Start typing in the search box above.",
+    "resultsFor": "Results for “{{query}}”",
+    "noResults": "No results for “{{query}}”.",
+    "noResultsType": "No results for this type.",
+    "tab": {
+      "all": "All",
+      "people": "People",
+      "groups": "Groups",
+      "posts": "Posts"
+    }
+  },
   "composer": {
     "placeholder": "What's on your mind?",
     "photo": "Photo",
