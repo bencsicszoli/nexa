@@ -5,6 +5,7 @@ import { Loader2, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import Avatar from './Avatar'
 import GroupLogo from './GroupLogo'
 import Comments from './Comments'
+import MediaViewer, { type ViewerItem } from './MediaViewer'
 import { useAuth } from '../auth/AuthContext'
 import { errorKey } from '../auth/errorKey'
 import { formatRelativeTime } from '../lib/time'
@@ -15,39 +16,52 @@ const MAX_CHARS = 5000
 
 /** A poszthoz csatolt média rácsa: képek és beágyazott videolejátszó. */
 function MediaGrid({ media }: { media: PostMedia[] }) {
+  const [viewerIndex, setViewerIndex] = useState<number | null>(null)
   if (media.length === 0) return null
-  // Egy elem teljes szélességben; több elem két oszlopos rácsban.
+
   const cols = media.length === 1 ? 'grid-cols-1' : 'grid-cols-2'
+  const images: ViewerItem[] = media
+    .filter((m) => m.type !== 'VIDEO')
+    .map((m) => ({ url: m.url, type: m.type }))
+
+  // A kattintott kép indexe az images tömbben (videókat kihagyva).
+  function imageIndex(mediaIndex: number): number {
+    return media.slice(0, mediaIndex).filter((m) => m.type !== 'VIDEO').length
+  }
 
   return (
-    <div className={`mt-3 grid gap-2 ${cols}`}>
-      {media.map((m, i) =>
-        m.type === 'VIDEO' ? (
-          <video
-            key={i}
-            src={m.url}
-            controls
-            preload="metadata"
-            className="max-h-[28rem] w-full rounded-xl border border-slate-200 bg-black"
-          />
-        ) : (
-          <a
-            key={i}
-            href={m.url}
-            target="_blank"
-            rel="noreferrer"
-            className="block overflow-hidden rounded-xl border border-slate-200"
-          >
-            <img
+    <>
+      <div className={`mt-3 grid gap-2 ${cols}`}>
+        {media.map((m, i) =>
+          m.type === 'VIDEO' ? (
+            <video
+              key={i}
               src={m.url}
-              alt=""
-              loading="lazy"
-              className="max-h-[28rem] w-full object-cover"
+              controls
+              preload="metadata"
+              className="max-h-[28rem] w-full rounded-xl border border-slate-200 bg-black"
             />
-          </a>
-        ),
+          ) : (
+            <button
+              key={i}
+              type="button"
+              onClick={() => setViewerIndex(imageIndex(i))}
+              className="block overflow-hidden rounded-xl border border-slate-200 focus:outline-none"
+            >
+              <img
+                src={m.url}
+                alt=""
+                loading="lazy"
+                className="max-h-[28rem] w-full object-cover"
+              />
+            </button>
+          ),
+        )}
+      </div>
+      {viewerIndex !== null && images.length > 0 && (
+        <MediaViewer items={images} startIndex={viewerIndex} onClose={() => setViewerIndex(null)} />
       )}
-    </div>
+    </>
   )
 }
 

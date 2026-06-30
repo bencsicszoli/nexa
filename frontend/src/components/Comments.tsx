@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { ImagePlus, Library, Loader2, MessageCircle, Video } from 'lucide-react'
 import Avatar from './Avatar'
 import MediaLibraryPicker from './MediaLibraryPicker'
+import MediaViewer, { type ViewerItem } from './MediaViewer'
 import {
   AttachmentGrid,
   IMAGE_ACCEPT,
@@ -436,31 +437,45 @@ function CommentInput({ initial = '', placeholder, submitLabel, autoFocus, allow
 
 /** A hozzászóláshoz csatolt média megjelenítése (képrács + beágyazott videó). */
 function CommentMediaView({ media }: { media: PostMedia[] }) {
+  const [viewerIndex, setViewerIndex] = useState<number | null>(null)
   if (media.length === 0) return null
+
   const cols = media.length === 1 ? 'grid-cols-1' : 'grid-cols-2'
+  const images: ViewerItem[] = media
+    .filter((m) => m.type !== 'VIDEO')
+    .map((m) => ({ url: m.url, type: m.type }))
+
+  function imageIndex(mediaIndex: number): number {
+    return media.slice(0, mediaIndex).filter((m) => m.type !== 'VIDEO').length
+  }
+
   return (
-    <div className={`mt-1 grid max-w-md gap-2 ${cols}`}>
-      {media.map((m, i) =>
-        m.type === 'VIDEO' ? (
-          <video
-            key={i}
-            src={m.url}
-            controls
-            preload="metadata"
-            className="max-h-72 w-full rounded-xl border border-slate-200 bg-black"
-          />
-        ) : (
-          <a
-            key={i}
-            href={m.url}
-            target="_blank"
-            rel="noreferrer"
-            className="block overflow-hidden rounded-xl border border-slate-200"
-          >
-            <img src={m.url} alt="" loading="lazy" className="max-h-72 w-full object-cover" />
-          </a>
-        ),
+    <>
+      <div className={`mt-1 grid max-w-md gap-2 ${cols}`}>
+        {media.map((m, i) =>
+          m.type === 'VIDEO' ? (
+            <video
+              key={i}
+              src={m.url}
+              controls
+              preload="metadata"
+              className="max-h-72 w-full rounded-xl border border-slate-200 bg-black"
+            />
+          ) : (
+            <button
+              key={i}
+              type="button"
+              onClick={() => setViewerIndex(imageIndex(i))}
+              className="block overflow-hidden rounded-xl border border-slate-200 focus:outline-none"
+            >
+              <img src={m.url} alt="" loading="lazy" className="max-h-72 w-full object-cover" />
+            </button>
+          ),
+        )}
+      </div>
+      {viewerIndex !== null && images.length > 0 && (
+        <MediaViewer items={images} startIndex={viewerIndex} onClose={() => setViewerIndex(null)} />
       )}
-    </div>
+    </>
   )
 }
