@@ -1,5 +1,6 @@
 package com.nexa.post;
 
+import com.nexa.comment.CommentRepository;
 import com.nexa.common.ApiException;
 import com.nexa.group.Group;
 import com.nexa.post.dto.CreatePostRequest;
@@ -14,6 +15,7 @@ import com.nexa.user.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -35,15 +37,18 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final CommentRepository commentRepository;
     private final StorageService storageService;
     private final DeferredStorageDeleter storageDeleter;
     private final NotificationService notificationService;
 
     public PostService(PostRepository postRepository, UserRepository userRepository,
+                       CommentRepository commentRepository,
                        StorageService storageService, DeferredStorageDeleter storageDeleter,
                        NotificationService notificationService) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
+        this.commentRepository = commentRepository;
         this.storageService = storageService;
         this.storageDeleter = storageDeleter;
         this.notificationService = notificationService;
@@ -132,13 +137,31 @@ public class PostService {
         deletePostWithMedia(post);
     }
 
-    /** A média kulcsait a DB-rekord törlése ELŐTT gyűjti ki; a fájltörlés commit után fut. */
+    /**
+     * A média kulcsait a DB-rekord törlése ELŐTT gyűjti ki; a fájltörlés commit után fut.
+     * Törlési sorrend: comment_media → comments → post_media → posts (FK-sorrend).
+     */
     private void deletePostWithMedia(Post post) {
-        List<String> mediaKeys = post.getMedia().stream()
+        // Komment-média kulcsok összegyűjtése (tárolóbeli fájlokhoz) a törlés előtt.
+        List<String> commentMediaKeys = commentRepository
+                .findByPostIdOrderByCreatedAtAsc(post.getId()).stream()
+                .flatMap(c -> c.getMedia().stream())
+                .map(m -> storageService.keyFromPublicUrl(m.getUrl()))
+                .toList();
+
+        // FK-sorrend: előbb a kommentek médiája, majd a kommentek törlése.
+        commentRepository.deleteCommentMediaByPostId(post.getId());
+        commentRepository.deleteAllByPostId(post.getId());
+
+        // Poszt média kulcsai, majd a poszt törlése (Hibernate kezeli a post_media-t).
+        List<String> postMediaKeys = post.getMedia().stream()
                 .map(m -> storageService.keyFromPublicUrl(m.getUrl()))
                 .toList();
         postRepository.delete(post);
-        storageDeleter.deleteAfterCommit(mediaKeys);
+
+        List<String> allKeys = new ArrayList<>(commentMediaKeys);
+        allKeys.addAll(postMediaKeys);
+        storageDeleter.deleteAfterCommit(allKeys);
     }
 
     /** Betölti a posztot, és csak akkor adja vissza, ha a hívó a szerzője (különben 404). */
@@ -154,6 +177,19 @@ public class PostService {
     @Transactional(readOnly = true)
     public List<PostDto> listByAuthor(UUID authorId) {
         return postRepository.findByAuthorIdAndGroupIsNullOrderByCreatedAtDesc(authorId)
+                .stream()
+                .map(PostDto::from)
+                .toList();
+    }
+
+    /**
+     * A saját profil bejegyzései a legutóbbi aktivitás szerint (a hírfolyam mintájára): egy
+     * régebbi posztra érkező friss hozzászólás a lista tetejére hozza a bejegyzést, hogy a
+     * felhasználó észrevegye. Csak a saját profilra ({@code /me}) — idegen profil marad időrendi.
+     */
+    @Transactional(readOnly = true)
+    public List<PostDto> listOwnByActivity(UUID authorId) {
+        return postRepository.findOwnProfilePostsByActivity(authorId)
                 .stream()
                 .map(PostDto::from)
                 .toList();
