@@ -195,6 +195,9 @@ export default function PostCard({
           >
             {formatRelativeTime(post.createdAt, i18n.language)}
           </time>
+          {post.editedAt && (
+            <span className="text-xs text-slate-400">&middot; {t('posts.edited')}</span>
+          )}
         </div>
 
         <div className="ml-auto flex items-center gap-2">

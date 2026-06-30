@@ -87,7 +87,8 @@
     "saving": "Mentés…",
     "cancel": "Mégse",
     "deleting": "Törlés…",
-    "deleteConfirm": "Biztosan törlöd ezt a bejegyzést?"
+    "deleteConfirm": "Biztosan törlöd ezt a bejegyzést?",
+    "edited": "szerkesztve"
   },
   "comments": {
     "placeholder": "Írj hozzászólást…",

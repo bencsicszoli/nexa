@@ -69,6 +69,10 @@ public class Post {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
+    /** Szerkesztés ideje; {@code null}, ha a posztot még nem szerkesztették. */
+    @Column(name = "edited_at")
+    private Instant editedAt;
+
     /**
      * A bejegyzés utolsó aktivitásának ideje: létrehozáskor a {@code createdAt}, majd minden
      * <b>új hozzászólás</b> előbbre tolja ({@link #touchActivity}). A hírfolyam (#10) ezen
@@ -117,6 +121,11 @@ public class Post {
     /** A szöveg módosítása (szerkesztés, #6 kiegészítés). A média változatlan marad. */
     public void setContent(String content) {
         this.content = content;
+        this.editedAt = Instant.now();
+    }
+
+    public Instant getEditedAt() {
+        return editedAt;
     }
 
     public List<PostMedia> getMedia() {

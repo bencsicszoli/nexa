@@ -87,7 +87,8 @@
     "saving": "Saving…",
     "cancel": "Cancel",
     "deleting": "Deleting…",
-    "deleteConfirm": "Delete this post?"
+    "deleteConfirm": "Delete this post?",
+    "edited": "edited"
   },
   "comments": {
     "placeholder": "Write a comment…",

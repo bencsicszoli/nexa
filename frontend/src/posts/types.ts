@@ -26,4 +26,6 @@ export type Post = {
   /** Kitöltve, ha a bejegyzés egy csoporthoz tartozik; profilposztnál null. */
   group: PostGroup | null
   createdAt: string
+  /** Kitöltve, ha a bejegyzést szerkesztették; null ha még sohasem módosult. */
+  editedAt: string | null
 }

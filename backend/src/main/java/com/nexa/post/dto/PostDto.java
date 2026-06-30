@@ -21,7 +21,8 @@ public record PostDto(
         String content,
         List<Media> media,
         Group group,
-        Instant createdAt) {
+        Instant createdAt,
+        Instant editedAt) {
 
     /** Egy csatolt média a megjelenítéshez (publikus URL + típus + méret). */
     public record Media(String url, MediaType type, long sizeBytes) {
@@ -47,6 +48,7 @@ public record PostDto(
                 post.getContent(),
                 media,
                 group,
-                post.getCreatedAt());
+                post.getCreatedAt(),
+                post.getEditedAt());
     }
 }
