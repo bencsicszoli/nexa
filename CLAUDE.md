@@ -55,8 +55,9 @@ Git: a commit szerző e-mail a GitHub **noreply** cím legyen
 ## Gyakori parancsok
 
 ```bash
-# Backend (http://localhost:8080)
-cd backend && mvn spring-boot:run
+# Backend (http://localhost:8080) — fejlesztéshez a dev-előfizetés-szimulátorral indítsd,
+# különben a friss fiók azonnal a paywallba ütközik és nem tud belépni (élesben a flag KÖTELEZŐEN false):
+cd backend && PAYMENT_DEV_CONTROLS=true mvn spring-boot:run
 mvn test                                   # összes teszt
 mvn test -Dtest=HealthControllerTest       # egy teszt
 mvn test -Dtest=HealthControllerTest#healthReturnsUp   # egy metódus

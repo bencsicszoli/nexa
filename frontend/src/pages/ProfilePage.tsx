@@ -139,7 +139,13 @@ export default function ProfilePage() {
 
         <div className="mt-5 flex items-center gap-4">
           <div className="relative">
-            <Avatar name={user.displayName} src={user.avatarUrl} size="lg" className="h-20 w-20 text-2xl" />
+            <Avatar
+              name={user.displayName}
+              src={user.avatarUrl}
+              size="lg"
+              className="h-20 w-20 text-2xl"
+              zoomable
+            />
             {uploading && (
               <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40">
                 <Loader2 className="h-6 w-6 animate-spin text-white" />

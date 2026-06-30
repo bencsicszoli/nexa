@@ -8,6 +8,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -50,19 +51,23 @@ public class User {
      * A felület nyelve a felhasználónak (#17). A bejelentkezéskor/{@code /auth/me}-kor a frontend
      * ezt állítja be. DB-default 'hu', hogy a séma-frissítéskor a meglévő sorok is értéket kapjanak.
      */
-    @Column(name = "locale", nullable = false, columnDefinition = "varchar(8) default 'hu'")
+    @Column(name = "locale", nullable = false, length = 8)
+    @ColumnDefault("'hu'")
     private String locale = "hu";
 
     /** Megjelenhet-e a felhasználó a keresőben/felfedezésben (#17). */
-    @Column(name = "searchable", nullable = false, columnDefinition = "boolean default true")
+    @Column(name = "searchable", nullable = false)
+    @ColumnDefault("true")
     private boolean searchable = true;
 
     /** Elrejtse-e az online jelenlétét mások elől (#17). */
-    @Column(name = "hide_presence", nullable = false, columnDefinition = "boolean default false")
+    @Column(name = "hide_presence", nullable = false)
+    @ColumnDefault("false")
     private boolean hidePresence = false;
 
     /** Be van-e kapcsolva a kétlépcsős hitelesítés (TOTP, #17); alapból ki. */
-    @Column(name = "totp_enabled", nullable = false, columnDefinition = "boolean default false")
+    @Column(name = "totp_enabled", nullable = false)
+    @ColumnDefault("false")
     private boolean totpEnabled = false;
 
     /**

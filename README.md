@@ -35,7 +35,7 @@ Ezután két terminál:
 ```bash
 # 1) Backend  (http://localhost:8080)  — alapból a localhost:5433/nexa DB-re csatlakozik
 cd backend
-mvn spring-boot:run
+PAYMENT_DEV_CONTROLS=true mvn spring-boot:run
 
 # 2) Frontend (http://localhost:5173)
 cd frontend
@@ -44,6 +44,11 @@ npm run dev
 ```
 
 > A datasource felülírható env-vel: `DB_URL`, `DB_USER`, `DB_PASSWORD`.
+>
+> A `PAYMENT_DEV_CONTROLS=true` **fejlesztéshez kell**: enélkül egy friss fiók azonnal a
+> paywallba ütközik (nincs előfizetése), és nem tudja használni az oldalt. A flag bekapcsolja a
+> dev-előfizetés-szimulátort (sarokban lebegő panel), amivel aktív állapotot lehet adni magadnak.
+> **Élesben KÖTELEZŐEN `false`** (ott a Paddle az igazság forrása).
 
 Nyisd meg a <http://localhost:5173> címet — a kezdőoldalnak **zöld „UP"** backend-állapotot kell mutatnia.
 

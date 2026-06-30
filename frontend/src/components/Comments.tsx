@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ImagePlus, Loader2, MessageCircle, Video } from 'lucide-react'
+import { ImagePlus, Library, Loader2, MessageCircle, Video } from 'lucide-react'
 import Avatar from './Avatar'
+import MediaLibraryPicker from './MediaLibraryPicker'
 import {
   AttachmentGrid,
   IMAGE_ACCEPT,
@@ -323,6 +324,7 @@ function CommentInput({ initial = '', placeholder, submitLabel, autoFocus, allow
   const media = useMediaAttachments()
   const imageInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
+  const [libraryOpen, setLibraryOpen] = useState(false)
 
   const trimmed = text.trim()
   const canSubmit = (trimmed.length > 0 || media.ready.length > 0) && !busy && !media.uploading
@@ -390,6 +392,15 @@ function CommentInput({ initial = '', placeholder, submitLabel, autoFocus, allow
             >
               <Video className="h-4 w-4 text-brand" />
             </button>
+            <button
+              type="button"
+              onClick={() => setLibraryOpen(true)}
+              disabled={media.attachments.length >= MAX_MEDIA}
+              aria-label={t('composer.fromLibrary')}
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 disabled:opacity-50"
+            >
+              <Library className="h-4 w-4 text-brand" />
+            </button>
           </>
         )}
         <button
@@ -415,6 +426,10 @@ function CommentInput({ initial = '', placeholder, submitLabel, autoFocus, allow
           </span>
         )}
       </div>
+
+      {allowMedia && libraryOpen && (
+        <MediaLibraryPicker onPick={(files) => void media.addFiles(files)} onClose={() => setLibraryOpen(false)} />
+      )}
     </form>
   )
 }

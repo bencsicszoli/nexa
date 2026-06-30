@@ -1,3 +1,7 @@
+import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import ImageLightbox from './ImageLightbox'
+
 type AvatarProps = {
   /** Megjelenítendő név — ebből generáljuk a monogramot és a háttérszínt. */
   name: string
@@ -7,6 +11,11 @@ type AvatarProps = {
   initials?: string
   size?: 'sm' | 'md' | 'lg'
   className?: string
+  /**
+   * Ha igaz ÉS van feltöltött kép (`src`), a kliknre teljes képernyős nagyítás nyílik.
+   * Monogram-fallbacknél nincs hatása (nincs mit nagyítani).
+   */
+  zoomable?: boolean
 }
 
 // Fix paletta, hogy a placeholder-avatárok színe determinisztikus legyen
@@ -41,14 +50,38 @@ function monogramOf(name: string): string {
   return (first + last).toUpperCase()
 }
 
-export default function Avatar({ name, src, initials, size = 'md', className = '' }: AvatarProps) {
+export default function Avatar({
+  name,
+  src,
+  initials,
+  size = 'md',
+  className = '',
+  zoomable = false,
+}: AvatarProps) {
+  const { t } = useTranslation()
+  const [zoomed, setZoomed] = useState(false)
+
   if (src) {
-    return (
+    const img = (
       <img
         src={src}
         alt={name}
         className={`inline-block shrink-0 rounded-full object-cover ${SIZES[size]} ${className}`}
       />
+    )
+    if (!zoomable) return img
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => setZoomed(true)}
+          aria-label={t('common.viewPhoto', { name })}
+          className="shrink-0 cursor-zoom-in rounded-full transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+        >
+          {img}
+        </button>
+        {zoomed && <ImageLightbox src={src} alt={name} onClose={() => setZoomed(false)} />}
+      </>
     )
   }
   return (

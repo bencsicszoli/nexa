@@ -1,4 +1,8 @@
 {
+  "common": {
+    "close": "Close",
+    "viewPhoto": "{{name}}'s profile photo, enlarged"
+  },
   "brand": {
     "tagline": "Ad-free, subscription-based social platform"
   },
@@ -23,6 +27,23 @@
     "myGroups": "My groups",
     "newFriendRequests": "{{count}} new friend requests"
   },
+  "media": {
+    "title": "Media library",
+    "subtitle": "Upload and keep your photos and videos — independent of posts.",
+    "upload": "Upload",
+    "uploading": "Uploading…",
+    "empty": "No media yet. Upload a photo or video.",
+    "openItem": "Open larger",
+    "delete": "Delete",
+    "deleteConfirm": "Delete this media? Posts you already shared it to will stay.",
+    "viewerLabel": "Media viewer",
+    "previous": "Previous",
+    "next": "Next",
+    "pickerTitle": "Insert from library",
+    "pickerHint": "Pick which media you want to add.",
+    "selectedCount": "{{count}} selected",
+    "insert": "Insert"
+  },
   "search": {
     "title": "Search",
     "subtitle": "Find people, groups and posts.",
@@ -41,6 +62,7 @@
     "placeholder": "What's on your mind?",
     "photo": "Photo",
     "video": "Video",
+    "fromLibrary": "From library",
     "text": "Text",
     "post": "Post",
     "posting": "Posting…",

@@ -1,7 +1,8 @@
 import { useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ImagePlus, Loader2, PenLine, Video } from 'lucide-react'
+import { ImagePlus, Library, Loader2, PenLine, Video } from 'lucide-react'
 import Avatar from './Avatar'
+import MediaLibraryPicker from './MediaLibraryPicker'
 import { AttachmentGrid, IMAGE_ACCEPT, MAX_MEDIA, VIDEO_ACCEPT, useMediaAttachments } from './mediaAttachments'
 import { useAuth } from '../auth/AuthContext'
 import { errorKey } from '../auth/errorKey'
@@ -31,6 +32,7 @@ export default function PostComposer({ onCreated, groupId }: Props) {
   const media = useMediaAttachments()
   const imageInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
+  const [libraryOpen, setLibraryOpen] = useState(false)
 
   const trimmed = content.trim()
   const canSubmit = (trimmed.length > 0 || media.ready.length > 0) && !submitting && !media.uploading
@@ -98,6 +100,15 @@ export default function PostComposer({ onCreated, groupId }: Props) {
             <Video className="h-4 w-4 text-brand" />
             <span className="hidden sm:inline">{t('composer.video')}</span>
           </button>
+          <button
+            type="button"
+            onClick={() => setLibraryOpen(true)}
+            disabled={media.attachments.length >= MAX_MEDIA}
+            className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 disabled:opacity-50"
+          >
+            <Library className="h-4 w-4 text-brand" />
+            <span className="hidden sm:inline">{t('composer.fromLibrary')}</span>
+          </button>
           <span className="ml-1 text-xs text-slate-400">
             {content.length}/{MAX_CHARS}
           </span>
@@ -127,6 +138,10 @@ export default function PostComposer({ onCreated, groupId }: Props) {
           </button>
         </div>
       </div>
+
+      {libraryOpen && (
+        <MediaLibraryPicker onPick={(files) => void media.addFiles(files)} onClose={() => setLibraryOpen(false)} />
+      )}
     </form>
   )
 }

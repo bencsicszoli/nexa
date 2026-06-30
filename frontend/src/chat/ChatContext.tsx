@@ -94,6 +94,18 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       const without = prev.filter((c) => c.id !== conversation.id)
       return sortByRecent([conversation, ...without])
     })
+    // A frissen megnyitott szál szerver által számolt online állapotát is átvesszük, hogy a
+    // zöld pötty az ELSŐ üzenet előtt is helyes legyen. A /topic/presence csak átmenetkor
+    // (be-/kijelentkezés) szól, így enélkül egy korábban már online partner offline-nak látszana.
+    if (conversation.otherUserId) {
+      const otherId = conversation.otherUserId
+      setOnlineUserIds((prev) => {
+        const next = new Set(prev)
+        if (conversation.online) next.add(otherId)
+        else next.delete(otherId)
+        return next
+      })
+    }
   }, [])
 
   const markRead = useCallback((conversationId: string) => {

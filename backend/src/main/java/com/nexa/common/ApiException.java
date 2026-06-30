@@ -74,6 +74,11 @@ public class ApiException extends RuntimeException {
                 "The upload link is invalid or has expired.");
     }
 
+    /** Nem létező vagy nem a hívóhoz tartozó médiatár-elem (a létezést sem szivárogtatjuk). */
+    public static ApiException mediaNotFound() {
+        return new ApiException(HttpStatus.NOT_FOUND, "MEDIA_NOT_FOUND", "Media not found.");
+    }
+
     // --- Ismerősök (#7) ---
 
     /** Saját magának nem küldhet ismerőskérést. */

@@ -98,6 +98,7 @@ export default function UserProfilePage() {
             src={profile.avatarUrl}
             size="lg"
             className="h-20 w-20 text-2xl"
+            zoomable
           />
           <div className="min-w-0 flex-1">
             <h1 className="text-lg font-semibold text-slate-900">{profile.displayName}</h1>

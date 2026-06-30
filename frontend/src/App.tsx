@@ -13,7 +13,7 @@ import SearchPage from './pages/SearchPage'
 import BillingPage from './pages/BillingPage'
 import NotificationsPage from './pages/NotificationsPage'
 import SettingsPage from './pages/SettingsPage'
-import PlaceholderPage from './pages/PlaceholderPage'
+import MediaPage from './pages/MediaPage'
 import LoginPage from './pages/auth/LoginPage'
 import RegisterPage from './pages/auth/RegisterPage'
 
@@ -38,7 +38,7 @@ export default function App() {
           <Route path="profile" element={<ProfilePage />} />
           <Route path="users/:id" element={<UserProfilePage />} />
           <Route path="notifications" element={<NotificationsPage />} />
-          <Route path="media" element={<PlaceholderPage titleKey="nav.media" />} />
+          <Route path="media" element={<MediaPage />} />
           <Route path="billing" element={<BillingPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />

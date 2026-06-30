@@ -11,6 +11,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -51,7 +52,8 @@ public class Group {
      * automatikus séma-frissítéskor.
      */
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20, columnDefinition = "varchar(20) default 'PUBLIC'")
+    @Column(nullable = false, length = 20)
+    @ColumnDefault("'PUBLIC'")
     private GroupVisibility visibility = GroupVisibility.PUBLIC;
 
     /** A csoport létrehozója (egyben az első admin). */

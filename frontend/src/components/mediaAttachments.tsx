@@ -30,6 +30,23 @@ function detectMedia(file: File): { kind: MediaType; contentType: string } | nul
   return null
 }
 
+/** Egy fájl típus- és méret-ellenőrzésének eredménye (közös a posztnak, kommentnek és a médiatárnak). */
+export type MediaCheck =
+  | { ok: true; kind: MediaType; contentType: string }
+  | { ok: false; errorKey: string }
+
+/** Validálja a fájl típusát és méretét; siker esetén a média-típust és a feltöltendő MIME-t adja. */
+export function checkMediaFile(file: File): MediaCheck {
+  const detected = detectMedia(file)
+  if (!detected) return { ok: false, errorKey: 'composer.mediaUnsupported' }
+  const isVideo = detected.kind === 'VIDEO'
+  const limit = isVideo ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES
+  if (file.size > limit) {
+    return { ok: false, errorKey: isVideo ? 'composer.mediaTooLargeVideo' : 'composer.mediaTooLargeImage' }
+  }
+  return { ok: true, kind: detected.kind, contentType: detected.contentType }
+}
+
 /** Egy-egy csatolt média lokális állapota (feltöltés alatt / kész / hibás). */
 export type Attachment = {
   id: string
@@ -70,15 +87,9 @@ export function useMediaAttachments() {
         setError('composer.mediaTooMany')
         break
       }
-      const detected = detectMedia(file)
-      if (!detected) {
-        setError('composer.mediaUnsupported')
-        continue
-      }
-      const isVideo = detected.kind === 'VIDEO'
-      const limit = isVideo ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES
-      if (file.size > limit) {
-        setError(isVideo ? 'composer.mediaTooLargeVideo' : 'composer.mediaTooLargeImage')
+      const detected = checkMediaFile(file)
+      if (!detected.ok) {
+        setError(detected.errorKey)
         continue
       }
 
