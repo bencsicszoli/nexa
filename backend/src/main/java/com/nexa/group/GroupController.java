@@ -1,5 +1,6 @@
 package com.nexa.group;
 
+import com.nexa.group.dto.ConfirmGroupLogoRequest;
 import com.nexa.group.dto.CreateGroupRequest;
 import com.nexa.group.dto.GroupDto;
 import com.nexa.group.dto.GroupJoinRequestDto;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -55,6 +57,34 @@ public class GroupController {
     @SubscriptionRequired
     public PresignedUpload logoUploadUrl(@Valid @RequestBody GroupLogoUploadRequest request) {
         return groupService.createLogoUpload(request.contentType());
+    }
+
+    /** Aláírt feltöltési cél egy meglévő csoport logójának frissítéséhez (csak admin). */
+    @PostMapping("/{groupId}/logo/upload-url")
+    @SubscriptionRequired
+    public PresignedUpload groupLogoUploadUrl(
+            @AuthenticationPrincipal UUID userId,
+            @PathVariable UUID groupId,
+            @Valid @RequestBody GroupLogoUploadRequest request) {
+        return groupService.createLogoUploadForGroup(userId, groupId, request.contentType());
+    }
+
+    /** A feltöltött logó megerősítése egy meglévő csoporthoz (csak admin). */
+    @PutMapping("/{groupId}/logo")
+    @SubscriptionRequired
+    public GroupDto confirmGroupLogo(
+            @AuthenticationPrincipal UUID userId,
+            @PathVariable UUID groupId,
+            @Valid @RequestBody ConfirmGroupLogoRequest request) {
+        return groupService.updateLogo(userId, groupId, request.key());
+    }
+
+    /** Csoport logójának eltávolítása (csak admin). */
+    @DeleteMapping("/{groupId}/logo")
+    public GroupDto removeGroupLogo(
+            @AuthenticationPrincipal UUID userId,
+            @PathVariable UUID groupId) {
+        return groupService.removeLogo(userId, groupId);
     }
 
     /** Csoportok böngészése a hívó tagsági szerepével (csatlakozáshoz). */

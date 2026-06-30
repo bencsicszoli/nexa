@@ -202,7 +202,9 @@
     "requestCancelled": "Kérelem visszavonva.",
     "requestApproved": "Kérelem jóváhagyva.",
     "requestRejected": "Kérelem elutasítva.",
-    "kicked": "Tag kizárva."
+    "kicked": "Tag kizárva.",
+    "logoUpdated": "A csoport logója frissült.",
+    "logoRemoved": "A csoport logója eltávolítva."
   },
   "feed": {
     "emptyTitle": "Még üres a hírfolyamod",

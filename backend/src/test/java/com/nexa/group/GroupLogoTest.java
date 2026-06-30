@@ -12,7 +12,9 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.nullValue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -67,6 +69,68 @@ class GroupLogoTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("Fotó kör"))
                 .andExpect(jsonPath("$.logoUrl").isNotEmpty());
+    }
+
+    @Test
+    void adminCanUpdateAndRemoveLogoOfExistingGroup() throws Exception {
+        String auth = "Bearer " + register("bela@logo.com", "Béla");
+
+        // Csoport létrehozása logó nélkül.
+        var createResult = mockMvc.perform(post("/api/groups").header("Authorization", auth)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Logós Kör\",\"description\":\"\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.logoUrl").value(nullValue()))
+                .andReturn();
+        String groupId = objectMapper.readTree(createResult.getResponse().getContentAsString())
+                .get("id").asText();
+
+        // Presigned URL kérése a meglévő csoporthoz.
+        var urlResult = mockMvc.perform(post("/api/groups/" + groupId + "/logo/upload-url")
+                        .header("Authorization", auth)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"contentType\":\"image/jpeg\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.uploadUrl").isNotEmpty())
+                .andExpect(jsonPath("$.key").isNotEmpty())
+                .andReturn();
+        String key = objectMapper.readTree(urlResult.getResponse().getContentAsString())
+                .get("key").asText();
+        assertThat(key).startsWith("group-logos/");
+
+        // Logó megerősítése — a logoUrl ki kell legyen töltve.
+        mockMvc.perform(put("/api/groups/" + groupId + "/logo").header("Authorization", auth)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"key\":\"%s\"}".formatted(key)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.logoUrl").isNotEmpty());
+
+        // Logó eltávolítása — a logoUrl null-ra vált.
+        mockMvc.perform(delete("/api/groups/" + groupId + "/logo").header("Authorization", auth))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.logoUrl").value(nullValue()));
+    }
+
+    @Test
+    void nonAdminCannotUpdateGroupLogo() throws Exception {
+        String admin = "Bearer " + register("anna@logo.com", "Anna");
+        String member = "Bearer " + register("peter@logo.com", "Péter");
+
+        // Admin létrehozza a csoportot.
+        var createResult = mockMvc.perform(post("/api/groups").header("Authorization", admin)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Titkos Kör\",\"description\":\"\"}"))
+                .andExpect(status().isCreated())
+                .andReturn();
+        String groupId = objectMapper.readTree(createResult.getResponse().getContentAsString())
+                .get("id").asText();
+
+        // Nem-admin nem kérhet logó-feltöltési URL-t.
+        mockMvc.perform(post("/api/groups/" + groupId + "/logo/upload-url")
+                        .header("Authorization", member)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"contentType\":\"image/jpeg\"}"))
+                .andExpect(status().isForbidden());
     }
 
     @Test

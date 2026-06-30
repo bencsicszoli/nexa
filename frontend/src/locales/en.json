@@ -202,7 +202,9 @@
     "requestCancelled": "Request cancelled.",
     "requestApproved": "Request approved.",
     "requestRejected": "Request rejected.",
-    "kicked": "Member removed."
+    "kicked": "Member removed.",
+    "logoUpdated": "Group logo updated.",
+    "logoRemoved": "Group logo removed."
   },
   "feed": {
     "emptyTitle": "Your feed is empty",

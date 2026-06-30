@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeft,
+  Camera,
   Check,
   Clock,
   Globe,
@@ -10,11 +11,13 @@ import {
   Lock,
   LogOut,
   MessageCircle,
+  Trash2,
   UserX,
   Users,
   X,
 } from 'lucide-react'
 import Avatar from '../components/Avatar'
+import AvatarCropper from '../components/AvatarCropper'
 import GroupLogo from '../components/GroupLogo'
 import PostCard from '../components/PostCard'
 import PostComposer from '../components/PostComposer'
@@ -23,6 +26,7 @@ import { useChat } from '../chat/ChatContext'
 import { errorKey } from '../auth/errorKey'
 import {
   approveJoinRequest,
+  confirmGroupLogo,
   deleteGroupPost,
   getGroup,
   getGroupMembers,
@@ -32,9 +36,15 @@ import {
   kickMember,
   leaveGroup,
   rejectJoinRequest,
+  removeGroupLogo,
+  requestGroupLogoUpdateUrl,
+  uploadGroupLogoFile,
 } from '../groups/groupsApi'
 import type { Group, GroupJoinRequest, GroupMember } from '../groups/types'
 import type { Post } from '../posts/types'
+
+const ALLOWED_LOGO_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+const MAX_LOGO_BYTES = 5 * 1024 * 1024
 
 export default function GroupPage() {
   const { t } = useTranslation()
@@ -54,6 +64,10 @@ export default function GroupPage() {
   const [busy, setBusy] = useState(false)
   const [actionId, setActionId] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<{ kind: 'ok' | 'error'; key: string } | null>(null)
+
+  const [pendingLogoFile, setPendingLogoFile] = useState<File | null>(null)
+  const [logoUploading, setLogoUploading] = useState(false)
+  const logoFileInput = useRef<HTMLInputElement>(null)
 
   const isAdmin = group?.role === 'ADMIN'
 
@@ -115,6 +129,55 @@ export default function GroupPage() {
     }
   }
 
+  function onPickLogoFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setFeedback(null)
+    if (!ALLOWED_LOGO_TYPES.includes(file.type)) {
+      setFeedback({ kind: 'error', key: 'auth.error.UNSUPPORTED_IMAGE_TYPE' })
+      return
+    }
+    if (file.size > MAX_LOGO_BYTES) {
+      setFeedback({ kind: 'error', key: 'auth.error.PAYLOAD_TOO_LARGE' })
+      return
+    }
+    setPendingLogoFile(file)
+  }
+
+  async function onLogoCropped(blob: Blob) {
+    if (!group) return
+    setPendingLogoFile(null)
+    setLogoUploading(true)
+    try {
+      const cropped = new File([blob], 'logo.jpg', { type: 'image/jpeg' })
+      const target = await requestGroupLogoUpdateUrl(group.id)
+      await uploadGroupLogoFile(target.uploadUrl, cropped)
+      const updated = await confirmGroupLogo(group.id, target.key)
+      setGroup(updated)
+      setFeedback({ kind: 'ok', key: 'groups.logoUpdated' })
+    } catch (err) {
+      setFeedback({ kind: 'error', key: errorKey(err) })
+    } finally {
+      setLogoUploading(false)
+    }
+  }
+
+  async function onRemoveLogo() {
+    if (!group) return
+    setLogoUploading(true)
+    setFeedback(null)
+    try {
+      const updated = await removeGroupLogo(group.id)
+      setGroup(updated)
+      setFeedback({ kind: 'ok', key: 'groups.logoRemoved' })
+    } catch (err) {
+      setFeedback({ kind: 'error', key: errorKey(err) })
+    } finally {
+      setLogoUploading(false)
+    }
+  }
+
   // Admin műveletek (jóváhagyás / elutasítás / kizárás) egységes kezelése.
   async function runAdmin(id: string, action: () => Promise<void>, okKey: string) {
     setActionId(id)
@@ -163,9 +226,43 @@ export default function GroupPage() {
     <div className="flex flex-col gap-4">
       <BackLink />
 
+      {pendingLogoFile && (
+        <AvatarCropper
+          file={pendingLogoFile}
+          onCancel={() => setPendingLogoFile(null)}
+          onConfirm={onLogoCropped}
+        />
+      )}
+
       <header className="rounded-2xl border border-slate-200 bg-white p-6">
         <div className="flex items-start gap-4">
-          <GroupLogo name={group.name} logoUrl={group.logoUrl} size="lg" className="h-14 w-14 text-xl" />
+          <div className="relative shrink-0">
+            <GroupLogo name={group.name} logoUrl={group.logoUrl} size="lg" className="h-14 w-14 text-xl" />
+            {isAdmin && (
+              <>
+                <input
+                  ref={logoFileInput}
+                  type="file"
+                  accept={ALLOWED_LOGO_TYPES.join(',')}
+                  className="hidden"
+                  onChange={onPickLogoFile}
+                />
+                <button
+                  type="button"
+                  disabled={logoUploading}
+                  onClick={() => logoFileInput.current?.click()}
+                  title={t('groups.logoUpload')}
+                  className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity hover:opacity-100 disabled:cursor-not-allowed"
+                >
+                  {logoUploading ? (
+                    <Loader2 className="h-5 w-5 animate-spin text-white" />
+                  ) : (
+                    <Camera className="h-5 w-5 text-white" />
+                  )}
+                </button>
+              </>
+            )}
+          </div>
           <div className="min-w-0 flex-1">
             <h1 className="text-lg font-semibold text-slate-900">{group.name}</h1>
             <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-sm text-slate-500">
@@ -221,6 +318,21 @@ export default function GroupPage() {
                   <MessageCircle className="h-4 w-4" />
                 )}
                 {t('chat.groupChat')}
+              </button>
+            )}
+            {isAdmin && group.logoUrl && (
+              <button
+                type="button"
+                disabled={logoUploading}
+                onClick={onRemoveLogo}
+                className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-500 transition-colors hover:bg-rose-50 hover:text-rose-600 disabled:opacity-60"
+              >
+                {logoUploading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                )}
+                {t('groups.logoRemove')}
               </button>
             )}
           </div>

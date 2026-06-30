@@ -137,3 +137,26 @@ export function rejectJoinRequest(groupId: string, userId: string): Promise<void
 export function kickMember(groupId: string, userId: string): Promise<void> {
   return apiFetch<void>(`/groups/${groupId}/members/${userId}`, { method: 'DELETE' })
 }
+
+// --- Admin: csoport logó kezelése ---
+
+/** Aláírt feltöltési cél kérése egy meglévő csoport logójának frissítéséhez (csak admin). */
+export function requestGroupLogoUpdateUrl(groupId: string): Promise<LogoUploadTarget> {
+  return apiFetch<LogoUploadTarget>(`/groups/${groupId}/logo/upload-url`, {
+    method: 'POST',
+    body: { contentType: 'image/jpeg' },
+  })
+}
+
+/** A feltöltött logó megerősítése egy meglévő csoporthoz (csak admin). */
+export function confirmGroupLogo(groupId: string, key: string): Promise<import('./types').Group> {
+  return apiFetch<import('./types').Group>(`/groups/${groupId}/logo`, {
+    method: 'PUT',
+    body: { key },
+  })
+}
+
+/** Csoport logójának eltávolítása (csak admin). */
+export function removeGroupLogo(groupId: string): Promise<import('./types').Group> {
+  return apiFetch<import('./types').Group>(`/groups/${groupId}/logo`, { method: 'DELETE' })
+}

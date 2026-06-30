@@ -10,6 +10,7 @@ import com.nexa.post.PostRepository;
 import com.nexa.post.PostService;
 import com.nexa.post.dto.CreatePostRequest;
 import com.nexa.post.dto.PostDto;
+import com.nexa.storage.DeferredStorageDeleter;
 import com.nexa.storage.PresignedUpload;
 import com.nexa.storage.StorageService;
 import com.nexa.user.User;
@@ -50,11 +51,12 @@ public class GroupService {
     private final PostRepository postRepository;
     private final PostService postService;
     private final StorageService storageService;
+    private final DeferredStorageDeleter storageDeleter;
 
     public GroupService(GroupRepository groupRepository, GroupMemberRepository memberRepository,
                         GroupJoinRequestRepository joinRequestRepository, UserRepository userRepository,
                         PostRepository postRepository, PostService postService,
-                        StorageService storageService) {
+                        StorageService storageService, DeferredStorageDeleter storageDeleter) {
         this.groupRepository = groupRepository;
         this.memberRepository = memberRepository;
         this.joinRequestRepository = joinRequestRepository;
@@ -62,6 +64,7 @@ public class GroupService {
         this.postRepository = postRepository;
         this.postService = postService;
         this.storageService = storageService;
+        this.storageDeleter = storageDeleter;
     }
 
     /** Aláírt logó-feltöltési cél a csoport-létrehozó űrlaphoz; csak képtípust enged. */
@@ -71,6 +74,34 @@ public class GroupService {
             throw ApiException.unsupportedImageType();
         }
         return storageService.createUpload(LOGO_PREFIX, normalized);
+    }
+
+    /** Aláírt logó-feltöltési cél egy meglévő csoport logójának frissítéséhez; csak admin. */
+    public PresignedUpload createLogoUploadForGroup(UUID adminId, UUID groupId, String contentType) {
+        requireAdmin(adminId, groupId);
+        return createLogoUpload(contentType);
+    }
+
+    /** Meglévő csoport logójának frissítése feltöltött kulccsal; csak admin. */
+    @Transactional
+    public GroupDto updateLogo(UUID adminId, UUID groupId, String logoKey) {
+        requireAdmin(adminId, groupId);
+        Group group = groupRepository.findById(groupId).orElseThrow(ApiException::groupNotFound);
+        String oldKey = storageService.keyFromPublicUrl(group.getLogoUrl());
+        group.setLogoUrl(resolveLogoUrl(logoKey));
+        storageDeleter.deleteAfterCommit(List.of(oldKey == null ? "" : oldKey));
+        return toDto(group, adminId);
+    }
+
+    /** Meglévő csoport logójának eltávolítása; csak admin. */
+    @Transactional
+    public GroupDto removeLogo(UUID adminId, UUID groupId) {
+        requireAdmin(adminId, groupId);
+        Group group = groupRepository.findById(groupId).orElseThrow(ApiException::groupNotFound);
+        String oldKey = storageService.keyFromPublicUrl(group.getLogoUrl());
+        group.setLogoUrl(null);
+        storageDeleter.deleteAfterCommit(List.of(oldKey == null ? "" : oldKey));
+        return toDto(group, adminId);
     }
 
     /** Csoport létrehozása; a létrehozó azonnal admin tag lesz. Opcionális feltöltött logóval. */
