@@ -2,13 +2,17 @@ package com.nexa.feed;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nexa.post.PostRepository;
 import com.nexa.support.TestSubscriptions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -38,6 +42,15 @@ class FeedFlowTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private JdbcTemplate jdbc;
+
+    @Autowired
+    private PostRepository postRepository;
+
+    @Autowired
+    private PlatformTransactionManager transactionManager;
+
     /** Regisztrál egy felhasználót, és visszaadja az [accessToken, userId] párt. */
     private String[] register(String email, String name) throws Exception {
         var result = mockMvc.perform(post("/api/auth/register")
@@ -56,6 +69,24 @@ class FeedFlowTest {
     /** Profil-bejegyzés létrehozása az adott felhasználóval. */
     private void createPost(String auth, String content) throws Exception {
         mockMvc.perform(post("/api/posts").header("Authorization", auth)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"content\":\"%s\",\"media\":[]}".formatted(content)))
+                .andExpect(status().isCreated());
+    }
+
+    /** Profil-bejegyzés létrehozása; visszaadja a létrejött poszt id-ját. */
+    private String createPostReturningId(String auth, String content) throws Exception {
+        var result = mockMvc.perform(post("/api/posts").header("Authorization", auth)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"content\":\"%s\",\"media\":[]}".formatted(content)))
+                .andExpect(status().isCreated())
+                .andReturn();
+        return objectMapper.readTree(result.getResponse().getContentAsString()).get("id").asText();
+    }
+
+    /** Hozzászólás egy bejegyzéshez az adott felhasználóval. */
+    private void comment(String auth, String postId, String content) throws Exception {
+        mockMvc.perform(post("/api/posts/" + postId + "/comments").header("Authorization", auth)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"content\":\"%s\",\"media\":[]}".formatted(content)))
                 .andExpect(status().isCreated());
@@ -193,6 +224,59 @@ class FeedFlowTest {
 
         // Pontosan négy elem után nincs több lap.
         assertThat(page2.get("nextCursor").isNull()).isTrue();
+    }
+
+    @Test
+    void newCommentBumpsCommentedPostToTopOfFeed() throws Exception {
+        String[] a = register("hank@feed.com", "Hank");
+        String[] b = register("ivy@feed.com", "Ivy");
+        String authA = "Bearer " + a[0];
+        String authB = "Bearer " + b[0];
+        befriend(authA, a[1], authB, b[1]);
+
+        // Két bejegyzés a baráttól: előbb a „régi", utána a „friss" (kezdetben ez utóbbi van felül).
+        String oldPostId = createPostReturningId(authB, "old-post");
+        createPost(authB, "fresh-post");
+
+        JsonNode before = getFeed(authA, "");
+        assertThat(before.get("items").get(0).get("content").asText()).isEqualTo("fresh-post");
+
+        // A régi posztra érkezik egy hozzászólás → az aktivitása a folyam tetejére tolja.
+        comment(authA, oldPostId, "new-reply-on-old-post");
+
+        JsonNode after = getFeed(authA, "");
+        assertThat(after.get("items").get(0).get("content").asText()).isEqualTo("old-post");
+        // A folyam tartalma változatlan — csak a sorrend lett friss-aktivitás szerinti.
+        assertThat(contentsOf(after.get("items")))
+                .containsExactlyInAnyOrder("old-post", "fresh-post");
+    }
+
+    @Test
+    void backfillRestoresActivityForCommentsMadeBeforeColumnExisted() throws Exception {
+        String[] a = register("jane@feed.com", "Jane");
+        String[] b = register("kyle@feed.com", "Kyle");
+        String authA = "Bearer " + a[0];
+        String authB = "Bearer " + b[0];
+        befriend(authA, a[1], authB, b[1]);
+
+        String oldPostId = createPostReturningId(authB, "old-post");
+        createPost(authB, "fresh-post");
+        comment(authA, oldPostId, "reply-before-restart"); // a régi posztot felülre tolja
+
+        // A „mező bevezetése előtti" állapot szimulálása: minden poszt aktivitása null. Ilyenkor
+        // a folyam a createdAt-ra esik vissza, így a kommentelt régi poszt lecsúszik.
+        jdbc.update("update posts set last_activity_at = null");
+        JsonNode legacy = getFeed(authA, "");
+        assertThat(legacy.get("items").get(0).get("content").asText()).isEqualTo("fresh-post");
+
+        // Indításkori visszatöltés: a kommentelt poszt aktivitása újraépül a komment idejéből.
+        new TransactionTemplate(transactionManager).executeWithoutResult(s -> {
+            postRepository.backfillActivityFromComments();
+            postRepository.backfillActivityFromCreatedAt();
+        });
+
+        JsonNode restored = getFeed(authA, "");
+        assertThat(restored.get("items").get(0).get("content").asText()).isEqualTo("old-post");
     }
 
     @Test

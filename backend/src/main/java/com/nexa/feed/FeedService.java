@@ -26,11 +26,12 @@ import java.util.UUID;
  * Az algoritmusmentes, időrendi hírfolyam összeállítása (#10). A folyam KIZÁRÓLAG a
  * felhasználó <b>ismerőseinek</b> és <b>követettjeinek</b> profil-posztjait, valamint a
  * <b>tag-csoportjai</b> bejegyzéseit tartalmazza — legfrissebb felül. Nincs benne ajánló
- * vagy rangsoroló logika; a sorrend tisztán a {@code (createdAt, id)} pár szerinti.
+ * vagy rangsoroló logika; a sorrend tisztán az utolsó aktivitás {@code (lastActivityAt, id)}
+ * pár szerinti — egy bejegyzés a létrehozásakor, majd minden új hozzászóláskor a tetejére kerül.
  * <p>
  * A lapozás cursor-alapú (keyset): minden lap egy átlátszatlan {@code nextCursor}-t ad,
- * amely az utolsó bejegyzés {@code (createdAt, id)} párját kódolja. Ez offset-mentes, így
- * új poszt érkezésekor sem hagy ki és nem ismétel bejegyzést.
+ * amely az utolsó bejegyzés {@code (aktivitás, id)} párját kódolja. Ez offset-mentes, így
+ * új poszt/aktivitás érkezésekor sem hagy ki és nem ismétel bejegyzést.
  */
 @Service
 public class FeedService {
@@ -86,7 +87,7 @@ public class FeedService {
             posts = postRepository.findFeedFirstPage(authorParam, groupParam, page);
         } else {
             Cursor c = decodeCursor(cursor);
-            posts = postRepository.findFeedAfter(authorParam, groupParam, c.createdAt(), c.id(), page);
+            posts = postRepository.findFeedAfter(authorParam, groupParam, c.activityAt(), c.id(), page);
         }
 
         boolean hasMore = posts.size() > pageSize;
@@ -97,13 +98,13 @@ public class FeedService {
         return new FeedPageDto(items, nextCursor);
     }
 
-    /** A lapozási cursor dekódolt tartalma: az utolsó bejegyzés rendezési kulcsa. */
-    private record Cursor(Instant createdAt, UUID id) {
+    /** A lapozási cursor dekódolt tartalma: az utolsó bejegyzés rendezési kulcsa (aktivitás + id). */
+    private record Cursor(Instant activityAt, UUID id) {
     }
 
-    /** Egy bejegyzés {@code (createdAt, id)} párját átlátszatlan, URL-biztos cursorrá kódolja. */
+    /** Egy bejegyzés {@code (aktivitás, id)} párját átlátszatlan, URL-biztos cursorrá kódolja. */
     private String encodeCursor(Post post) {
-        String raw = post.getCreatedAt().toString() + "|" + post.getId();
+        String raw = post.getLastActivityAt().toString() + "|" + post.getId();
         return Base64.getUrlEncoder().withoutPadding()
                 .encodeToString(raw.getBytes(StandardCharsets.UTF_8));
     }
@@ -116,9 +117,9 @@ public class FeedService {
             if (sep < 0) {
                 throw new IllegalArgumentException("missing separator");
             }
-            Instant createdAt = Instant.parse(raw.substring(0, sep));
+            Instant activityAt = Instant.parse(raw.substring(0, sep));
             UUID id = UUID.fromString(raw.substring(sep + 1));
-            return new Cursor(createdAt, id);
+            return new Cursor(activityAt, id);
         } catch (RuntimeException e) {
             throw ApiException.invalidCursor();
         }

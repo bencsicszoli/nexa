@@ -95,6 +95,9 @@ public class CommentService {
         Comment parent = resolveParent(parentId, postId);
         User author = userRepository.findById(userId).orElseThrow(ApiException::userNotFound);
         Comment saved = commentRepository.save(new Comment(post, author, parent, trimmed, media));
+        // Az új hozzászólás előbbre tolja a bejegyzés aktivitását, így a hírfolyamban (#10) a
+        // tetejére kerül — a managed entitáson a setter a tranzakció flush-akor perzisztálódik.
+        post.touchActivity(saved.getCreatedAt());
         return CommentDto.of(saved, List.of());
     }
 

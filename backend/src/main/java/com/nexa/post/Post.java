@@ -30,7 +30,9 @@ import java.util.UUID;
         // A profil-időrend (szerző szerint, legfrissebb felül) gyakori lekérdezés.
         @Index(name = "idx_posts_author_created", columnList = "author_id, created_at"),
         // A csoport-időrend (csoport szerint, legfrissebb felül) a csoportoldalhoz (#9).
-        @Index(name = "idx_posts_group_created", columnList = "group_id, created_at")
+        @Index(name = "idx_posts_group_created", columnList = "group_id, created_at"),
+        // A hírfolyam-rendezés az utolsó aktivitáson megy (létrehozás vagy új komment).
+        @Index(name = "idx_posts_last_activity", columnList = "last_activity_at")
 })
 public class Post {
 
@@ -66,6 +68,17 @@ public class Post {
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
+
+    /**
+     * A bejegyzés utolsó aktivitásának ideje: létrehozáskor a {@code createdAt}, majd minden
+     * <b>új hozzászólás</b> előbbre tolja ({@link #touchActivity}). A hírfolyam (#10) ezen
+     * rendez, hogy a friss választ kapó bejegyzés a folyam tetejére kerüljön — a sorrend így is
+     * tisztán időrendi (utolsó aktivitás szerint), nincs benne rangsoroló/ajánló logika.
+     * Régi (oszlop előtti) sorokon {@code null} lehet — a lekérdezés és a {@link #getLastActivityAt}
+     * ilyenkor a {@code createdAt}-ra esik vissza.
+     */
+    @Column(name = "last_activity_at")
+    private Instant lastActivityAt = Instant.now();
 
     protected Post() {
         // JPA
@@ -112,5 +125,24 @@ public class Post {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    /**
+     * A hírfolyam-rendezés kulcsa: az utolsó aktivitás ideje (létrehozás vagy a legfrissebb
+     * hozzászólás). Régi, oszlop nélkül létrejött sornál {@code null} helyett a {@code createdAt}-ot
+     * adja vissza, így a rendezés sosem kap null kulcsot.
+     */
+    public Instant getLastActivityAt() {
+        return lastActivityAt != null ? lastActivityAt : createdAt;
+    }
+
+    /**
+     * Előbbre tolja az utolsó aktivitást (új hozzászóláskor), de csak előre — régebbi időpont
+     * nem rontja le a már beállított értéket. Így a bejegyzés a hírfolyam tetejére kerül.
+     */
+    public void touchActivity(Instant at) {
+        if (at != null && (lastActivityAt == null || at.isAfter(lastActivityAt))) {
+            this.lastActivityAt = at;
+        }
     }
 }

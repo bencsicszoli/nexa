@@ -78,6 +78,32 @@ class PostFlowTest {
     }
 
     @Test
+    void newCommentBumpsOwnPostToTopOfProfile() throws Exception {
+        String auth = "Bearer " + register("activity@example.com");
+
+        String firstId = createPost(auth, "Régebbi poszt");
+        String secondId = createPost(auth, "Újabb poszt");
+
+        // Frissen két posztunk van a saját profilon.
+        mockMvc.perform(get("/api/posts/me").header("Authorization", auth))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2));
+
+        // Hozzászólás a RÉGEBBI poszthoz → annak aktivitása frissül.
+        mockMvc.perform(post("/api/posts/" + firstId + "/comments").header("Authorization", auth)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"content":"Friss hozzászólás a régihez."}"""))
+                .andExpect(status().isCreated());
+
+        // A saját profil-lista a legutóbbi aktivitás szerint rendez: a régebbi poszt a tetejére kerül.
+        mockMvc.perform(get("/api/posts/me").header("Authorization", auth))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(firstId))
+                .andExpect(jsonPath("$[1].id").value(secondId));
+    }
+
+    @Test
     void rejectsUnauthenticatedAndEmptyPost() throws Exception {
         // Token nélkül védett.
         mockMvc.perform(post("/api/posts")

@@ -53,10 +53,10 @@ public class PostController {
         return postService.createMediaUpload(request.contentType());
     }
 
-    /** A bejelentkezett felhasználó saját bejegyzései. */
+    /** A bejelentkezett felhasználó saját bejegyzései (legutóbbi aktivitás felül — új komment is). */
     @GetMapping("/me")
     public List<PostDto> myPosts(@AuthenticationPrincipal UUID userId) {
-        return postService.listByAuthor(userId);
+        return postService.listOwnByActivity(userId);
     }
 
     /** Egy adott felhasználó bejegyzései (pl. más profiljának megtekintéséhez). */
