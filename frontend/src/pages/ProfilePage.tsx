@@ -1,18 +1,23 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Camera, Loader2, Trash2 } from 'lucide-react'
+import { Camera, ImagePlus, Loader2, Trash2 } from 'lucide-react'
 import Avatar from '../components/Avatar'
 import AvatarCropper from '../components/AvatarCropper'
+import CoverBanner from '../components/CoverBanner'
+import CoverCropper from '../components/CoverCropper'
 import PostComposer from '../components/PostComposer'
 import PostCard from '../components/PostCard'
 import { useAuth } from '../auth/AuthContext'
 import { errorKey } from '../auth/errorKey'
 import {
   confirmAvatar,
+  confirmCover,
   removeAvatar,
+  removeCover,
   requestAvatarUploadUrl,
+  requestCoverUploadUrl,
   updateProfile,
-  uploadAvatarFile,
+  uploadImageFile,
 } from '../profile/profileApi'
 import { getMyPosts } from '../posts/postApi'
 import type { Post } from '../posts/types'
@@ -25,13 +30,16 @@ export default function ProfilePage() {
   const { t, i18n } = useTranslation()
   const { user, updateUser } = useAuth()
   const fileInput = useRef<HTMLInputElement>(null)
+  const coverInput = useRef<HTMLInputElement>(null)
 
   const [displayName, setDisplayName] = useState(user?.displayName ?? '')
   const [bio, setBio] = useState(user?.bio ?? '')
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
-  // A kivágásra váró, épp kiválasztott fájl (megnyitja a kivágó ablakot).
+  const [coverUploading, setCoverUploading] = useState(false)
+  // A kivágásra váró, épp kiválasztott fájlok (megnyitják a megfelelő kivágó ablakot).
   const [pendingFile, setPendingFile] = useState<File | null>(null)
+  const [pendingCoverFile, setPendingCoverFile] = useState<File | null>(null)
   // Visszajelzés: vagy egy siker-, vagy egy hibaüzenet-kulcs.
   const [feedback, setFeedback] = useState<{ kind: 'ok' | 'error'; key: string } | null>(null)
 
@@ -80,7 +88,8 @@ export default function ProfilePage() {
     }
   }
 
-  function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
+  // Egy kiválasztott képfájl validálása; siker esetén meghívja a callbacket (kivágó megnyitása).
+  function pickImage(e: React.ChangeEvent<HTMLInputElement>, accept: (file: File) => void) {
     const file = e.target.files?.[0]
     e.target.value = '' // hogy ugyanaz a fájl újra kiválasztható legyen
     if (!file) return
@@ -94,11 +103,10 @@ export default function ProfilePage() {
       setFeedback({ kind: 'error', key: 'auth.error.PAYLOAD_TOO_LARGE' })
       return
     }
-    // A feltöltés a kivágás megerősítése után indul (lásd onCropped).
-    setPendingFile(file)
+    accept(file)
   }
 
-  // A kivágóból kapott négyzetes kép (image/jpeg) feltöltése.
+  // A kivágóból kapott négyzetes kép (image/jpeg) feltöltése avatarként.
   async function onCropped(blob: Blob) {
     setPendingFile(null)
     setUploading(true)
@@ -106,7 +114,7 @@ export default function ProfilePage() {
       const contentType = 'image/jpeg'
       const cropped = new File([blob], 'avatar.jpg', { type: contentType })
       const target = await requestAvatarUploadUrl(contentType)
-      await uploadAvatarFile(target.uploadUrl, cropped)
+      await uploadImageFile(target.uploadUrl, cropped)
       const updated = await confirmAvatar(target.key)
       updateUser(updated)
       setFeedback({ kind: 'ok', key: 'profile.avatarUpdated' })
@@ -114,6 +122,25 @@ export default function ProfilePage() {
       setFeedback({ kind: 'error', key: errorKey(err) })
     } finally {
       setUploading(false)
+    }
+  }
+
+  // A kivágóból kapott 3:1-es kép (image/jpeg) feltöltése borítóképként.
+  async function onCoverCropped(blob: Blob) {
+    setPendingCoverFile(null)
+    setCoverUploading(true)
+    try {
+      const contentType = 'image/jpeg'
+      const cropped = new File([blob], 'cover.jpg', { type: contentType })
+      const target = await requestCoverUploadUrl(contentType)
+      await uploadImageFile(target.uploadUrl, cropped)
+      const updated = await confirmCover(target.key)
+      updateUser(updated)
+      setFeedback({ kind: 'ok', key: 'profile.coverUpdated' })
+    } catch (err) {
+      setFeedback({ kind: 'error', key: errorKey(err) })
+    } finally {
+      setCoverUploading(false)
     }
   }
 
@@ -131,14 +158,27 @@ export default function ProfilePage() {
     }
   }
 
+  async function onRemoveCover() {
+    setFeedback(null)
+    setCoverUploading(true)
+    try {
+      const updated = await removeCover()
+      updateUser(updated)
+      setFeedback({ kind: 'ok', key: 'profile.coverRemoved' })
+    } catch (err) {
+      setFeedback({ kind: 'error', key: errorKey(err) })
+    } finally {
+      setCoverUploading(false)
+    }
+  }
+
   return (
     <div className="flex flex-col gap-4">
-      <header className="rounded-2xl border border-slate-200 bg-white p-6">
-        <h1 className="text-lg font-semibold text-slate-900">{t('profile.title')}</h1>
-        <p className="mt-0.5 text-sm text-slate-500">{t('profile.subtitle')}</p>
+      <header className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+        <CoverBanner url={user.coverUrl} busy={coverUploading} />
 
-        <div className="mt-5 flex items-center gap-4">
-          <div className="relative">
+        <div className="p-6">
+          <div className="relative mb-3 w-fit">
             <Avatar
               name={user.displayName}
               src={user.avatarUrl}
@@ -152,7 +192,11 @@ export default function ProfilePage() {
               </span>
             )}
           </div>
-          <div className="flex flex-col gap-2">
+
+          <h1 className="text-lg font-semibold text-slate-900">{t('profile.title')}</h1>
+          <p className="mt-0.5 text-sm text-slate-500">{t('profile.subtitle')}</p>
+
+          <div className="mt-4 flex flex-col gap-2">
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
@@ -175,13 +219,43 @@ export default function ProfilePage() {
                 </button>
               )}
             </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={coverUploading}
+                onClick={() => coverInput.current?.click()}
+                className="inline-flex items-center gap-2 rounded-lg bg-brand px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-dark disabled:opacity-60"
+              >
+                <ImagePlus className="h-4 w-4" />
+                {coverUploading ? t('profile.uploading') : t('profile.uploadCover')}
+              </button>
+              {user.coverUrl && (
+                <button
+                  type="button"
+                  disabled={coverUploading}
+                  onClick={onRemoveCover}
+                  className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 disabled:opacity-60"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  {t('profile.removeCover')}
+                </button>
+              )}
+            </div>
             <p className="text-xs text-slate-400">{t('profile.avatarHint')}</p>
           </div>
+
           <input
             ref={fileInput}
             type="file"
             accept={ALLOWED_TYPES.join(',')}
-            onChange={onPickFile}
+            onChange={(e) => pickImage(e, setPendingFile)}
+            className="hidden"
+          />
+          <input
+            ref={coverInput}
+            type="file"
+            accept={ALLOWED_TYPES.join(',')}
+            onChange={(e) => pickImage(e, setPendingCoverFile)}
             className="hidden"
           />
         </div>
@@ -277,6 +351,13 @@ export default function ProfilePage() {
           file={pendingFile}
           onCancel={() => setPendingFile(null)}
           onConfirm={onCropped}
+        />
+      )}
+      {pendingCoverFile && (
+        <CoverCropper
+          file={pendingCoverFile}
+          onCancel={() => setPendingCoverFile(null)}
+          onConfirm={onCoverCropped}
         />
       )}
     </div>

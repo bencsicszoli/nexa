@@ -110,6 +110,59 @@ class ProfileFlowTest {
     }
 
     @Test
+    void coverUploadAndRemoveHappyPath() throws Exception {
+        String auth = "Bearer " + register("dave@example.com");
+
+        // Kezdetben nincs borítókép.
+        mockMvc.perform(get("/api/profile").header("Authorization", auth))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.coverUrl").doesNotExist());
+
+        // 1) Borítókép feltöltési link kérése.
+        var uploadUrlResult = mockMvc.perform(post("/api/profile/cover/upload-url")
+                        .header("Authorization", auth)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"contentType":"image/jpeg"}"""))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.uploadUrl").isNotEmpty())
+                .andExpect(jsonPath("$.key").isNotEmpty())
+                .andReturn();
+        JsonNode upload = objectMapper.readTree(uploadUrlResult.getResponse().getContentAsString());
+        String uploadUrl = upload.get("uploadUrl").asText();
+        String key = upload.get("key").asText();
+        assertThat(key).startsWith("covers/");
+        String uploadToken = uploadUrl.substring(uploadUrl.indexOf("token=") + "token=".length());
+
+        // 2) A bájtok feltöltése az aláírt linkre.
+        byte[] fakeJpg = "JPEGfake-cover-bytes".getBytes(StandardCharsets.UTF_8);
+        mockMvc.perform(put("/api/storage/upload")
+                        .param("token", uploadToken)
+                        .contentType(MediaType.IMAGE_JPEG)
+                        .content(fakeJpg))
+                .andExpect(status().isNoContent());
+
+        // 3) Megerősítés → a coverUrl a tárolt objektumra mutat.
+        mockMvc.perform(put("/api/profile/cover").header("Authorization", auth)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(java.util.Map.of("key", key))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.coverUrl").value("/api/media/" + key));
+
+        // 4) A feltöltött kép publikusan kiszolgálható, a tartalom egyezik.
+        mockMvc.perform(get("/api/media/" + key))
+                .andExpect(status().isOk())
+                .andExpect(content().bytes(fakeJpg));
+
+        // 5) Borítókép eltávolítása → az eltávolítással a tárolt fájl is törlődik.
+        mockMvc.perform(delete("/api/profile/cover").header("Authorization", auth))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.coverUrl").doesNotExist());
+        mockMvc.perform(get("/api/media/" + key))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     void rejectsUnauthenticatedAndInvalidInput() throws Exception {
         // Token nélkül a profil védett.
         mockMvc.perform(get("/api/profile")).andExpect(status().isUnauthorized());
@@ -137,6 +190,22 @@ class ProfileFlowTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"key":"secrets/passwords.txt"}"""))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_UPLOAD"));
+
+        // Borítókép: nem kép típus → elutasítás.
+        mockMvc.perform(post("/api/profile/cover/upload-url").header("Authorization", auth)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"contentType":"application/pdf"}"""))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("UNSUPPORTED_IMAGE_TYPE"));
+
+        // Borítókép: idegen (nem covers/) kulcs megerősítése → elutasítás.
+        mockMvc.perform(put("/api/profile/cover").header("Authorization", auth)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"key":"avatars/not-mine.jpg"}"""))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("INVALID_UPLOAD"));
     }

@@ -6,6 +6,7 @@ export type User = {
   displayName: string
   bio: string | null
   avatarUrl: string | null
+  coverUrl: string | null
   role: string
   /** A felület nyelve (#17) — belépéskor ez az igazság forrása. */
   locale?: string

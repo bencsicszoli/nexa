@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { Check, Clock, Loader2, MessageCircle, UserCheck, UserPlus, UserX } from 'lucide-react'
 import Avatar from '../components/Avatar'
+import CoverBanner from '../components/CoverBanner'
 import PostCard from '../components/PostCard'
 import { useAuth } from '../auth/AuthContext'
 import { useChat } from '../chat/ChatContext'
@@ -91,8 +92,10 @@ export default function UserProfilePage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <header className="rounded-2xl border border-slate-200 bg-white p-6">
-        <div className="flex items-start gap-4">
+      <header className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+        <CoverBanner url={profile.coverUrl} />
+
+        <div className="p-6">
           <Avatar
             name={profile.displayName}
             src={profile.avatarUrl}
@@ -100,7 +103,7 @@ export default function UserProfilePage() {
             className="h-20 w-20 text-2xl"
             zoomable
           />
-          <div className="min-w-0 flex-1">
+          <div className="mt-3 min-w-0">
             <h1 className="text-lg font-semibold text-slate-900">{profile.displayName}</h1>
             <p className="mt-0.5 text-xs text-slate-400">
               {t('profile.memberSince', { date: memberSince })}
@@ -109,18 +112,18 @@ export default function UserProfilePage() {
               <p className="mt-3 whitespace-pre-wrap break-words text-sm text-slate-700">{profile.bio}</p>
             )}
           </div>
-        </div>
 
-        {/* Kapcsolat-műveletek: ismerős (kétirányú) + követés (egyirányú), egymástól függetlenül */}
-        <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">
-          <FriendAction profile={profile} busy={actionBusy} run={runAction} />
-          <FollowAction profile={profile} busy={actionBusy} run={runAction} />
-          <MessageAction userId={profile.id} />
-          {actionError && (
-            <span className="text-sm text-rose-600" role="alert">
-              {t(actionError)}
-            </span>
-          )}
+          {/* Kapcsolat-műveletek: ismerős (kétirányú) + követés (egyirányú), egymástól függetlenül */}
+          <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">
+            <FriendAction profile={profile} busy={actionBusy} run={runAction} />
+            <FollowAction profile={profile} busy={actionBusy} run={runAction} />
+            <MessageAction userId={profile.id} />
+            {actionError && (
+              <span className="text-sm text-rose-600" role="alert">
+                {t(actionError)}
+              </span>
+            )}
+          </div>
         </div>
       </header>
 

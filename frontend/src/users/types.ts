@@ -7,6 +7,7 @@ export type PublicUser = {
   id: string
   displayName: string
   avatarUrl: string | null
+  coverUrl: string | null
   bio: string | null
   createdAt: string
   /** A hívó saját profilja-e (ekkor a kapcsolat-műveletek nem értelmezettek). */

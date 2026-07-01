@@ -43,6 +43,10 @@ public class User {
     @Column(name = "avatar_url")
     private String avatarUrl;
 
+    /** A borítókép (3:1) publikus URL-je (opcionális); a kép az objektumtárolóba kerül. */
+    @Column(name = "cover_url")
+    private String coverUrl;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role = Role.USER;
@@ -137,6 +141,14 @@ public class User {
 
     public void setAvatarUrl(String avatarUrl) {
         this.avatarUrl = avatarUrl;
+    }
+
+    public String getCoverUrl() {
+        return coverUrl;
+    }
+
+    public void setCoverUrl(String coverUrl) {
+        this.coverUrl = coverUrl;
     }
 
     public Role getRole() {

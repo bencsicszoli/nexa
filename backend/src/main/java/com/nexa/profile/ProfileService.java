@@ -23,6 +23,8 @@ public class ProfileService {
 
     /** Az avatar kulcsainak logikai mappája a tárolóban. */
     private static final String AVATAR_PREFIX = "avatars";
+    /** A borítókép kulcsainak logikai mappája a tárolóban. */
+    private static final String COVER_PREFIX = "covers";
     private static final Set<String> ALLOWED_IMAGE_TYPES =
             Set.of("image/jpeg", "image/png", "image/webp", "image/gif");
 
@@ -79,6 +81,38 @@ public class ProfileService {
         User user = loadUser(userId);
         String oldKey = storageService.keyFromPublicUrl(user.getAvatarUrl());
         user.setAvatarUrl(null);
+        storageDeleter.deleteAfterCommit(List.of(oldKey == null ? "" : oldKey));
+        return UserDto.from(user);
+    }
+
+    /** Aláírt borítókép-feltöltési cél; csak képtípust enged. */
+    public PresignedUpload createCoverUpload(String contentType) {
+        String normalized = contentType == null ? "" : contentType.trim().toLowerCase();
+        if (!ALLOWED_IMAGE_TYPES.contains(normalized)) {
+            throw ApiException.unsupportedImageType();
+        }
+        return storageService.createUpload(COVER_PREFIX, normalized);
+    }
+
+    @Transactional
+    public UserDto confirmCover(UUID userId, String key) {
+        // Csak a saját borítókép-mappába mutató kulcsot fogadunk el (nem tetszőleges objektum).
+        if (key == null || !key.startsWith(COVER_PREFIX + "/")) {
+            throw ApiException.invalidUpload();
+        }
+        User user = loadUser(userId);
+        String oldKey = storageService.keyFromPublicUrl(user.getCoverUrl());
+        user.setCoverUrl(storageService.publicUrl(key));
+        // A korábbi borítókép fájlja árvává válna — töröljük a csere commitja után.
+        storageDeleter.deleteAfterCommit(List.of(oldKey == null ? "" : oldKey));
+        return UserDto.from(user);
+    }
+
+    @Transactional
+    public UserDto removeCover(UUID userId) {
+        User user = loadUser(userId);
+        String oldKey = storageService.keyFromPublicUrl(user.getCoverUrl());
+        user.setCoverUrl(null);
         storageDeleter.deleteAfterCommit(List.of(oldKey == null ? "" : oldKey));
         return UserDto.from(user);
     }

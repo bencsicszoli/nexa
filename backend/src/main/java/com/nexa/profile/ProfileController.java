@@ -3,6 +3,8 @@ package com.nexa.profile;
 import com.nexa.auth.dto.UserDto;
 import com.nexa.profile.dto.AvatarUploadRequest;
 import com.nexa.profile.dto.ConfirmAvatarRequest;
+import com.nexa.profile.dto.ConfirmCoverRequest;
+import com.nexa.profile.dto.CoverUploadRequest;
 import com.nexa.profile.dto.UpdateProfileRequest;
 import com.nexa.storage.PresignedUpload;
 import jakarta.validation.Valid;
@@ -63,5 +65,23 @@ public class ProfileController {
     @ResponseStatus(HttpStatus.OK)
     public UserDto removeAvatar(@AuthenticationPrincipal UUID userId) {
         return profileService.removeAvatar(userId);
+    }
+
+    @PostMapping("/cover/upload-url")
+    public PresignedUpload coverUploadUrl(@Valid @RequestBody CoverUploadRequest request) {
+        return profileService.createCoverUpload(request.contentType());
+    }
+
+    @PutMapping("/cover")
+    public UserDto confirmCover(
+            @AuthenticationPrincipal UUID userId,
+            @Valid @RequestBody ConfirmCoverRequest request) {
+        return profileService.confirmCover(userId, request.key());
+    }
+
+    @DeleteMapping("/cover")
+    @ResponseStatus(HttpStatus.OK)
+    public UserDto removeCover(@AuthenticationPrincipal UUID userId) {
+        return profileService.removeCover(userId);
     }
 }
