@@ -4,22 +4,30 @@ import com.nexa.follow.FollowRepository;
 import com.nexa.friend.FriendshipRepository;
 import com.nexa.group.Group;
 import com.nexa.group.GroupMemberRepository;
+import com.nexa.group.GroupRole;
 import com.nexa.post.Post;
 import com.nexa.user.User;
+import com.nexa.user.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -33,6 +41,8 @@ class NotificationServiceTest {
     @Mock FriendshipRepository friendshipRepository;
     @Mock FollowRepository followRepository;
     @Mock GroupMemberRepository groupMemberRepository;
+    @Mock UserRepository userRepository;
+    @Mock NotificationRepository notificationRepository;
 
     @InjectMocks NotificationService service;
 
@@ -95,5 +105,83 @@ class NotificationServiceTest {
         Set<UUID> recipients = service.resolveRecipients(groupPost(author, groupId));
 
         assertThat(recipients).containsExactly(member);
+    }
+
+    private User user(UUID id, String name) {
+        User u = mock(User.class);
+        lenient().when(u.getId()).thenReturn(id);
+        lenient().when(u.getDisplayName()).thenReturn(name);
+        return u;
+    }
+
+    private Notification savedNotificationStub() {
+        Notification saved = mock(Notification.class);
+        when(saved.getId()).thenReturn(UUID.randomUUID());
+        lenient().when(saved.getType()).thenReturn(NotificationType.GROUP_JOIN_REQUEST);
+        lenient().when(saved.getActorId()).thenReturn(UUID.randomUUID());
+        lenient().when(saved.getCreatedAt()).thenReturn(java.time.Instant.now());
+        return saved;
+    }
+
+    @Test
+    void groupJoinRequest_notifiesAdminButNotTheRequester() {
+        UUID requesterId = UUID.randomUUID();
+        UUID adminId = UUID.randomUUID();
+        User requester = user(requesterId, "Bob");
+        Group group = mock(Group.class);
+        UUID groupId = UUID.randomUUID();
+        when(group.getId()).thenReturn(groupId);
+        when(group.getName()).thenReturn("Privát klub");
+
+        User admin = user(adminId, "Ann");
+        Notification saved = savedNotificationStub();
+        when(groupMemberRepository.findUserIdsByGroupIdAndRole(groupId, GroupRole.ADMIN))
+                .thenReturn(List.of(adminId));
+        when(userRepository.findById(adminId)).thenReturn(Optional.of(admin));
+        when(notificationRepository.save(any())).thenReturn(saved);
+
+        service.notifyGroupJoinRequest(requester, group);
+
+        verify(notificationRepository).save(any());
+        verify(messaging).convertAndSendToUser(eq(adminId.toString()), eq("/queue/notifications"), any());
+    }
+
+    @Test
+    void groupJoinRequest_adminWithPreferenceOffIsSkipped() {
+        UUID requesterId = UUID.randomUUID();
+        UUID adminId = UUID.randomUUID();
+        User requester = user(requesterId, "Bob");
+        User admin = user(adminId, "Ann");
+        lenient().when(admin.getNotificationPrefs()).thenReturn(
+                new com.nexa.user.NotificationPrefs(true, true, true, true, false));
+        Group group = mock(Group.class);
+        UUID groupId = UUID.randomUUID();
+        when(group.getId()).thenReturn(groupId);
+
+        when(groupMemberRepository.findUserIdsByGroupIdAndRole(groupId, GroupRole.ADMIN))
+                .thenReturn(List.of(adminId));
+        when(userRepository.findById(adminId)).thenReturn(Optional.of(admin));
+
+        service.notifyGroupJoinRequest(requester, group);
+
+        verify(notificationRepository, never()).save(any());
+        verify(messaging, never()).convertAndSendToUser(any(), eq("/queue/notifications"), any());
+    }
+
+    @Test
+    void groupJoinRequest_adminRequestingOwnGroupDoesNotNotifyThemselves() {
+        UUID adminId = UUID.randomUUID();
+        User admin = user(adminId, "Ann");
+        Group group = mock(Group.class);
+        UUID groupId = UUID.randomUUID();
+        when(group.getId()).thenReturn(groupId);
+
+        when(groupMemberRepository.findUserIdsByGroupIdAndRole(groupId, GroupRole.ADMIN))
+                .thenReturn(List.of(adminId));
+
+        service.notifyGroupJoinRequest(admin, group);
+
+        verify(notificationRepository, never()).save(any());
+        verify(messaging, never()).convertAndSendToUser(any(), eq("/queue/notifications"), any());
     }
 }

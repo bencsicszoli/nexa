@@ -8,7 +8,8 @@ import type { NexaNotification } from './types'
  * <ul>
  *   <li>NEW_POST → a hírfolyamra, és kéri annak frissítését (az új poszt felül jelenik meg),</li>
  *   <li>FRIEND_REQUEST / FRIEND_ACCEPTED → az Ismerősök oldalra,</li>
- *   <li>NEW_FOLLOWER → az aktor profiljára.</li>
+ *   <li>NEW_FOLLOWER → az aktor profiljára,</li>
+ *   <li>GROUP_JOIN_REQUEST → a csoport oldalára (a függő kérelmek ott jóváhagyhatók).</li>
  * </ul>
  */
 export function useOpenNotification(): (n: NexaNotification) => void {
@@ -22,6 +23,11 @@ export function useOpenNotification(): (n: NexaNotification) => void {
           break
         case 'NEW_FOLLOWER':
           navigate(`/users/${n.actorId}`)
+          break
+        case 'GROUP_JOIN_REQUEST':
+          if (n.groupId) {
+            navigate(`/groups/${n.groupId}`)
+          }
           break
         case 'NEW_POST':
         default:

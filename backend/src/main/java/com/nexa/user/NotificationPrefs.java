@@ -12,10 +12,11 @@ public record NotificationPrefs(
         boolean newPost,
         boolean friendRequest,
         boolean friendAccepted,
-        boolean newFollower) {
+        boolean newFollower,
+        boolean groupJoinRequest) {
 
     /** Minden értesítéstípus bekapcsolva — az alapértelmezett beállítás. */
     public static NotificationPrefs defaults() {
-        return new NotificationPrefs(true, true, true, true);
+        return new NotificationPrefs(true, true, true, true, true);
     }
 }

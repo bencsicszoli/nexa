@@ -5,6 +5,7 @@ export type NotificationType =
   | 'FRIEND_REQUEST'
   | 'FRIEND_ACCEPTED'
   | 'NEW_FOLLOWER'
+  | 'GROUP_JOIN_REQUEST'
 
 export type NexaNotification = {
   /** Az értesítés azonosítója (a perzisztált entitás id-ja; olvasott-jelöléshez és kulcsként is). */

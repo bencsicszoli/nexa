@@ -10,6 +10,8 @@ export function notificationText(n: NexaNotification, t: TFunction): string {
       return t('notifications.friendAccepted', { name: n.actorName })
     case 'NEW_FOLLOWER':
       return t('notifications.newFollower', { name: n.actorName })
+    case 'GROUP_JOIN_REQUEST':
+      return t('notifications.groupJoinRequest', { name: n.actorName, group: n.groupName })
     case 'NEW_POST':
     default:
       if (n.groupId && n.groupName) {

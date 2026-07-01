@@ -36,6 +36,10 @@ public interface GroupMemberRepository extends JpaRepository<GroupMember, UUID> 
     @Query("select gm.user.id from GroupMember gm where gm.group.id = :groupId")
     List<UUID> findUserIdsByGroupId(@Param("groupId") UUID groupId);
 
+    /** Egy csoport adott szerepű tagjainak felhasználó-id-ja — pl. az adminok értesítéséhez. */
+    @Query("select gm.user.id from GroupMember gm where gm.group.id = :groupId and gm.role = :role")
+    List<UUID> findUserIdsByGroupIdAndRole(@Param("groupId") UUID groupId, @Param("role") GroupRole role);
+
     /**
      * A megadott csoportok taglétszáma egy lekérdezésben (N+1 nélkül, a böngészéshez).
      * Minden sor: {@code [groupId, count]}.

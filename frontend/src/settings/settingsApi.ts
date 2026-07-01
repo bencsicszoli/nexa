@@ -6,6 +6,7 @@ export type NotificationPrefs = {
   friendRequest: boolean
   friendAccepted: boolean
   newFollower: boolean
+  groupJoinRequest: boolean
 }
 
 /** A beállítások teljes állapota (lásd com.nexa.settings.dto.SettingsDto). */

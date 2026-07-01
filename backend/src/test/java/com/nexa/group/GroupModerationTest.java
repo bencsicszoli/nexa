@@ -90,6 +90,19 @@ class GroupModerationTest {
                 .andExpect(jsonPath("$[0].userId").value(bob[1]))
                 .andExpect(jsonPath("$[0].displayName").value("Bob"));
 
+        // Az admin értesítést is kap a kérelemről (nem kell a csoportra kattintania).
+        mockMvc.perform(get("/api/notifications").header("Authorization", admin[0]))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].type").value("GROUP_JOIN_REQUEST"))
+                .andExpect(jsonPath("$.items[0].actorName").value("Bob"))
+                .andExpect(jsonPath("$.items[0].groupId").value(gid))
+                .andExpect(jsonPath("$.items[0].groupName").value("Privát klub"));
+
+        // Bob (a kérelmező) nem kap értesítést a saját kéréséről.
+        mockMvc.perform(get("/api/notifications").header("Authorization", bob[0]))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(0));
+
         // Nem-admin nem láthatja a kérelmeket.
         mockMvc.perform(get("/api/groups/" + gid + "/requests").header("Authorization", bob[0]))
                 .andExpect(status().isForbidden())

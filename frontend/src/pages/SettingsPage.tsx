@@ -202,6 +202,7 @@ function NotificationsSection({
         <Toggle label={t('settings.notifFriendRequest')} checked={prefs.friendRequest} disabled={saving} onChange={(v) => toggle('friendRequest', v)} />
         <Toggle label={t('settings.notifFriendAccepted')} checked={prefs.friendAccepted} disabled={saving} onChange={(v) => toggle('friendAccepted', v)} />
         <Toggle label={t('settings.notifNewFollower')} checked={prefs.newFollower} disabled={saving} onChange={(v) => toggle('newFollower', v)} />
+        <Toggle label={t('settings.notifGroupJoinRequest')} checked={prefs.groupJoinRequest} disabled={saving} onChange={(v) => toggle('groupJoinRequest', v)} />
       </div>
     </Section>
   )

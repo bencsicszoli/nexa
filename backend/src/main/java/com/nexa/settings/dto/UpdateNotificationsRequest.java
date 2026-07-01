@@ -7,9 +7,10 @@ public record UpdateNotificationsRequest(
         boolean newPost,
         boolean friendRequest,
         boolean friendAccepted,
-        boolean newFollower) {
+        boolean newFollower,
+        boolean groupJoinRequest) {
 
     public NotificationPrefs toPrefs() {
-        return new NotificationPrefs(newPost, friendRequest, friendAccepted, newFollower);
+        return new NotificationPrefs(newPost, friendRequest, friendAccepted, newFollower, groupJoinRequest);
     }
 }

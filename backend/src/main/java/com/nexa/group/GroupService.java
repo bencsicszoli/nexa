@@ -10,6 +10,7 @@ import com.nexa.post.PostRepository;
 import com.nexa.post.PostService;
 import com.nexa.post.dto.CreatePostRequest;
 import com.nexa.post.dto.PostDto;
+import com.nexa.realtime.NotificationService;
 import com.nexa.storage.DeferredStorageDeleter;
 import com.nexa.storage.PresignedUpload;
 import com.nexa.storage.StorageService;
@@ -52,11 +53,13 @@ public class GroupService {
     private final PostService postService;
     private final StorageService storageService;
     private final DeferredStorageDeleter storageDeleter;
+    private final NotificationService notificationService;
 
     public GroupService(GroupRepository groupRepository, GroupMemberRepository memberRepository,
                         GroupJoinRequestRepository joinRequestRepository, UserRepository userRepository,
                         PostRepository postRepository, PostService postService,
-                        StorageService storageService, DeferredStorageDeleter storageDeleter) {
+                        StorageService storageService, DeferredStorageDeleter storageDeleter,
+                        NotificationService notificationService) {
         this.groupRepository = groupRepository;
         this.memberRepository = memberRepository;
         this.joinRequestRepository = joinRequestRepository;
@@ -65,6 +68,7 @@ public class GroupService {
         this.postService = postService;
         this.storageService = storageService;
         this.storageDeleter = storageDeleter;
+        this.notificationService = notificationService;
     }
 
     /** Aláírt logó-feltöltési cél a csoport-létrehozó űrlaphoz; csak képtípust enged. */
@@ -205,6 +209,7 @@ public class GroupService {
                 memberRepository.save(new GroupMember(group, user, GroupRole.MEMBER));
             } else if (!joinRequestRepository.existsByGroupIdAndUserId(groupId, userId)) {
                 joinRequestRepository.save(new GroupJoinRequest(group, user));
+                notificationService.notifyGroupJoinRequest(user, group);
             }
         }
         return toDto(group, userId);

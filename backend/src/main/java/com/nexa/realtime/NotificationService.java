@@ -4,6 +4,7 @@ import com.nexa.follow.FollowRepository;
 import com.nexa.friend.FriendshipRepository;
 import com.nexa.group.Group;
 import com.nexa.group.GroupMemberRepository;
+import com.nexa.group.GroupRole;
 import com.nexa.post.Post;
 import com.nexa.realtime.dto.NotificationDto;
 import com.nexa.common.ApiException;
@@ -42,7 +43,8 @@ import java.util.function.Predicate;
  * <ul>
  *   <li><b>NEW_POST:</b> a szerző ismerősei + követői (profil-poszt), vagy a csoport tagjai
  *       (csoport-poszt) — a szerzőt mindig kihagyva,</li>
- *   <li><b>FRIEND_REQUEST / FRIEND_ACCEPTED / NEW_FOLLOWER:</b> egyetlen címzett.</li>
+ *   <li><b>FRIEND_REQUEST / FRIEND_ACCEPTED / NEW_FOLLOWER:</b> egyetlen címzett,</li>
+ *   <li><b>GROUP_JOIN_REQUEST:</b> egy privát csoport minden adminja.</li>
  * </ul>
  */
 @Service
@@ -123,6 +125,29 @@ public class NotificationService {
     public void notifyNewFollower(User actor, UUID recipientId) {
         relationshipNotification(NotificationType.NEW_FOLLOWER, actor, recipientId,
                 NotificationPrefs::newFollower);
+    }
+
+    /** Csoport-csatlakozási kérelem a csoport minden adminjának (az aktor a kérelmező). */
+    public void notifyGroupJoinRequest(User actor, Group group) {
+        List<UUID> adminIds = groupMemberRepository.findUserIdsByGroupIdAndRole(
+                group.getId(), GroupRole.ADMIN);
+        List<PendingPush> toPush = new ArrayList<>();
+        for (UUID adminId : adminIds) {
+            if (adminId.equals(actor.getId())) {
+                continue;
+            }
+            NotificationPrefs prefs = userRepository.findById(adminId)
+                    .map(User::getNotificationPrefs)
+                    .orElse(null);
+            if (prefs != null && !prefs.groupJoinRequest()) {
+                continue;
+            }
+            Notification saved = notificationRepository.save(Notification.groupJoinRequest(
+                    adminId, actor.getId(), actor.getDisplayName(), actor.getAvatarUrl(),
+                    group.getId(), group.getName(), group.getLogoUrl()));
+            toPush.add(new PendingPush(adminId, NotificationDto.from(saved)));
+        }
+        pushAfterCommit(toPush);
     }
 
     /** Egy kapcsolati értesítés perzisztálása + push, ha a címzett a típust nem kapcsolta ki. */

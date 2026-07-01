@@ -101,6 +101,14 @@ public class Notification {
                 null, null, null, null);
     }
 
+    /** Csoport-csatlakozási kérelem egy adminnak — a group* mezők a kérelmezett csoportra mutatnak. */
+    public static Notification groupJoinRequest(UUID recipientId, UUID actorId, String actorName,
+                                                 String actorAvatarUrl, UUID groupId, String groupName,
+                                                 String groupLogoUrl) {
+        return new Notification(recipientId, NotificationType.GROUP_JOIN_REQUEST, actorId, actorName,
+                actorAvatarUrl, null, groupId, groupName, groupLogoUrl);
+    }
+
     public UUID getId() {
         return id;
     }

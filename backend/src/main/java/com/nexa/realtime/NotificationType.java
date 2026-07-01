@@ -12,5 +12,7 @@ public enum NotificationType {
     /** Egy elküldött ismerőskérést elfogadtak. */
     FRIEND_ACCEPTED,
     /** Valaki követni kezdte a felhasználót. */
-    NEW_FOLLOWER
+    NEW_FOLLOWER,
+    /** Valaki csatlakozási kérelmet küldött egy admin által kezelt privát csoportba. */
+    GROUP_JOIN_REQUEST
 }

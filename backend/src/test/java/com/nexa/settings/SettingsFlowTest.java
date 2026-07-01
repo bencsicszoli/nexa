@@ -56,7 +56,8 @@ class SettingsFlowTest {
                 .andExpect(jsonPath("$.notificationPrefs.newPost").value(true))
                 .andExpect(jsonPath("$.notificationPrefs.friendRequest").value(true))
                 .andExpect(jsonPath("$.notificationPrefs.friendAccepted").value(true))
-                .andExpect(jsonPath("$.notificationPrefs.newFollower").value(true));
+                .andExpect(jsonPath("$.notificationPrefs.newFollower").value(true))
+                .andExpect(jsonPath("$.notificationPrefs.groupJoinRequest").value(true));
 
         // Nyelv mentése.
         mockMvc.perform(patch("/api/settings/locale").header("Authorization", auth)
@@ -77,10 +78,11 @@ class SettingsFlowTest {
         mockMvc.perform(patch("/api/settings/notifications").header("Authorization", auth)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"newPost":false,"friendRequest":true,"friendAccepted":false,"newFollower":true}"""))
+                                {"newPost":false,"friendRequest":true,"friendAccepted":false,"newFollower":true,"groupJoinRequest":false}"""))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.notificationPrefs.newPost").value(false))
-                .andExpect(jsonPath("$.notificationPrefs.friendAccepted").value(false));
+                .andExpect(jsonPath("$.notificationPrefs.friendAccepted").value(false))
+                .andExpect(jsonPath("$.notificationPrefs.groupJoinRequest").value(false));
 
         mockMvc.perform(patch("/api/settings/privacy").header("Authorization", auth)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -93,6 +95,7 @@ class SettingsFlowTest {
         mockMvc.perform(get("/api/settings").header("Authorization", auth))
                 .andExpect(jsonPath("$.notificationPrefs.newPost").value(false))
                 .andExpect(jsonPath("$.notificationPrefs.friendRequest").value(true))
+                .andExpect(jsonPath("$.notificationPrefs.groupJoinRequest").value(false))
                 .andExpect(jsonPath("$.searchable").value(false))
                 .andExpect(jsonPath("$.hidePresence").value(true));
     }
